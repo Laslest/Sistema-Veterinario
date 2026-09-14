@@ -59,8 +59,8 @@ serão realizados, incluindo a possibilidade de atendimento a domicílio.
 ## Divisão inicial de responsabilidades
 
 | Integrante | Responsabilidade |
-|---|---|
-| Davi Gesteira | Agendamento |
+|---|---|---|
+| Davi Gesteira dos Anjos Paula | Agendamento |
 | David Pereira Ramos | Cliente / Paciente |
-| Cauã Raphael | Unidade / Local de Atendimento |
-| Victor dos Santos | Veterinário |
+| Cauã Raphael Santos de Paula | Unidade / Local de Atendimento |
+| Carlos Victor Dos Santos Dantas | Veterinário |

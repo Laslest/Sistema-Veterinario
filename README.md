@@ -8,16 +8,16 @@ Os clientes poderão cadastrar seus animais e realizar agendamentos, enquanto os
 
 ## Integrantes
 
-- Davi Gesteira - @Laslest
+- Davi Gesteira Dos Anjos Paula - @Laslest
 - David Pereira Ramos - @dramos-cpu
-- Cauã Raphael - @cauraphael
-- Victor dos Santos - @VictorSantosD
+- Cauã Raphael Santos de Paula - @cauraphael
+- Carlos Victor Dos Santos Dantas - @VictorSantosD
 
 ## Quem faz o quê
 
 | Integrante | Responsabilidade | GitHub |
 |---|---|---|
-| Davi Gesteira | Agendamento | @Laslest |
+| Davi Gesteira dos Anjos Paula | Agendamento | @Laslest |
 | David Pereira Ramos | Cliente / Paciente | @dramos-cpu |
-| Cauã Raphael | Unidade / Local de Atendimento | @cauraphael |
-| Victor dos Santos | Veterinário | @VictorSantosD |
+| Cauã Raphael Santos de Paula | Unidade / Local de Atendimento | @cauraphael |
+| Carlos Victor Dos Santos Dantas | Veterinário | @VictorSantosD |
