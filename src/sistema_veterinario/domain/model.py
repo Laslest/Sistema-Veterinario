@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-
+from datetime import datetime
+from datetime import time
 
 @dataclass(frozen=True)
 class Disponibilidade:
@@ -12,14 +13,18 @@ class Disponibilidade:
                 "O horário de início deve ser menor do que o horário final"
             )
 
-
 class Veterinario:
     def __init__(self, id_veterinario, nome, crmv):
         self.id_veterinario = id_veterinario
         self.nome = nome
         self.crmv = crmv
-from datetime import datetime
+        self.disponibilidades = []
 
+    def adicionar_disponibilidade(self, disponibilidade):
+        for existente in self.disponibilidades:
+           if (disponibilidade.inicio < existente.fim and disponibilidade.fim > existente.inicio):
+               raise ValueError("Disponibilidade conflitante.")
+        self.disponibilidades.append(disponibilidade)
 
 class Agendamento:
     def __init__(self, id_agendamento, id_cliente, id_paciente, id_veterinario, data_hora):
