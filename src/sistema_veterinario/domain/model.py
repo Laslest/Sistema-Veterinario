@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import time
-from dataclasses import dataclass
 from typing import Optional
 
 @dataclass(frozen=True)
@@ -62,6 +61,29 @@ class Email:
             
         if dominio.startswith(".") or dominio.endswith("."):
             raise ValueError("Domínio do e-mail inválido: não pode começar ou terminar com ponto")
+
+@dataclass(frozen=True)
+class Telefone:
+    numero: str
+
+    def __post_init__(self) -> None:
+        
+        if not self.numero or not self.numero.strip():
+            raise ValueError("Telefone não pode ser vazio")
+
+        if not self.numero.isdigit():
+            raise ValueError("Telefone inválido: Deve conter somente números.")
+
+        tamanho = len(self.numero)
+        if tamanho not in (10, 11):
+            raise ValueError("Telefone inválido: Deve ter 10 (fixo) ou 11 (celular) dígitos.")
+
+        ddd = int(self.numero[:2])
+        if ddd < 11 or ddd > 99:
+            raise ValueError("Telefone inválido: DDD deve estar entre 11 e 99.")
+
+        if tamanho == 11 and self.numero[2] != '9':
+            raise ValueError("Telefone inválido: Celulares com 11 dígitos devem começar com '9'.")
 
 @dataclass(frozen=True)
 class Endereco:
