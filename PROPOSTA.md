@@ -2,10 +2,10 @@
 
 ## Integrantes
 
-- Davi Gesteira - @Laslest
+- Davi Gesteira dos Anjos Paula - @Laslest
 - David Pereira Ramos - @dramos-cpu
-- Cauã Raphael - @cauraphael
-- Victor dos Santos - @VictorSantosD
+- Cauã Raphael Santos de Paula - @cauaraphael
+- Carlos Victor dos Santos - @VictorSantosD
 
 ## Domínio escolhido
 
@@ -59,7 +59,7 @@ serão realizados, incluindo a possibilidade de atendimento a domicílio.
 ## Divisão inicial de responsabilidades
 
 | Integrante | Responsabilidade |
-|---|---|---|
+|---|---|
 | Davi Gesteira dos Anjos Paula | Agendamento |
 | David Pereira Ramos | Cliente / Paciente |
 | Cauã Raphael Santos de Paula | Unidade / Local de Atendimento |
