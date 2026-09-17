@@ -1,7 +1,35 @@
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import time
+from dataclasses import dataclass
 
+
+@dataclass(frozen=True)
+class Endereco:
+    rua: str
+    numero: str
+    bairro: str
+    cidade: str
+    estado: str
+    cep: str
+
+    def __post_init__(self):
+        # Verifica se a rua está vazia
+        if not self.rua.strip():
+            raise ValueError("Rua é obrigatória")
+
+        # Verifica se a cidade está vazia
+        if not self.cidade.strip():
+            raise ValueError("Cidade é obrigatória")
+
+        # Verifica se o estado está vazio
+        if not self.estado.strip():
+            raise ValueError("Estado é obrigatório")
+
+        # Verifica se o CEP possui exatamente 8 números
+        if len(self.cep) != 8 or not self.cep.isdigit():
+            raise ValueError("CEP inválido")
+        
 @dataclass(frozen=True)
 class Disponibilidade:
     inicio: time
