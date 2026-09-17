@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from datetime import time
 from dataclasses import dataclass
-
+from typing import Optional
 
 @dataclass(frozen=True)
 class Endereco:
@@ -29,6 +29,35 @@ class Endereco:
         # Verifica se o CEP possui exatamente 8 números
         if len(self.cep) != 8 or not self.cep.isdigit():
             raise ValueError("CEP inválido")
+
+
+@dataclass
+class Unidade:
+    id_unidade: int
+    nome: str
+    endereco: Optional[Endereco]
+    atende_domicilio: bool
+
+    def __post_init__(self):
+        # Verifica se o nome está vazio
+        if not self.nome.strip():
+            raise ValueError("Nome da unidade é obrigatório")
+
+        # Unidade física precisa ter endereço
+        if not self.atende_domicilio and self.endereco is None:
+            raise ValueError(
+                "Unidade física precisa de um endereço"
+            )
+
+    def __eq__(self, outra):
+        if not isinstance(outra, Unidade):
+            return False
+
+        return self.id_unidade == outra.id_unidade
+
+    def __hash__(self):
+        return hash(self.id_unidade)
+        
         
 @dataclass(frozen=True)
 class Disponibilidade:
