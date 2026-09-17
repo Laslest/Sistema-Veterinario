@@ -5,6 +5,65 @@ from dataclasses import dataclass
 from typing import Optional
 
 @dataclass(frozen=True)
+class CPF:
+    numero: str
+
+    def __post_init__(self):
+
+        if len(self.numero) != 11 or not self.numero.isdigit():
+            raise ValueError(
+                f"CPF inválido: Deve conter exatamente 11 dígitos. "
+                f"Recebido: {self.numero}"
+            )
+
+        if self.numero == self.numero[0] * 11:
+            raise ValueError(
+                "CPF inválido: Não pode conter todos os dígitos iguais."
+            )
+
+        for i in (9, 10):
+            soma = sum(
+                int(self.numero[j]) * (i + 1 - j)
+                for j in range(i)
+            )
+            
+            digito = (soma * 10) % 11 % 10
+
+            if int(self.numero[i]) != digito:
+                raise ValueError(
+                    f"CPF inválido: Dígito verificador na posição {i} incorreto."
+                )
+                
+@dataclass(frozen=True)
+class Email:
+    endereco: str
+
+    def __post_init__(self) -> None:
+
+        if not self.endereco or not self.endereco.strip():
+            raise ValueError("E-mail não pode ser vazio")
+
+        if " " in self.endereco:
+            raise ValueError("E-mail não pode conter espaços")
+
+        if self.endereco.count("@") != 1:
+            raise ValueError("E-mail deve conter exatamente um '@'")
+
+        local, dominio = self.endereco.split("@")
+
+        if not local:
+            raise ValueError("E-mail inválido: parte local (antes do @) vazia")
+
+        if not dominio:
+            raise ValueError("E-mail inválido: domínio (depois do @) vazio")
+
+        if "." not in dominio:
+            raise ValueError("Domínio do e-mail inválido: falta o ponto (ex: .com)")
+            
+        if dominio.startswith(".") or dominio.endswith("."):
+            raise ValueError("Domínio do e-mail inválido: não pode começar ou terminar com ponto")
+
+@dataclass(frozen=True)
 class Endereco:
     rua: str
     numero: str
