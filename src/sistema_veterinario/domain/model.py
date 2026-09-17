@@ -4,88 +4,6 @@ from datetime import time
 from typing import Optional
 
 @dataclass(frozen=True)
-class CPF:
-    numero: str
-
-    def __post_init__(self):
-
-        if len(self.numero) != 11 or not self.numero.isdigit():
-            raise ValueError(
-                f"CPF inválido: Deve conter exatamente 11 dígitos. "
-                f"Recebido: {self.numero}"
-            )
-
-        if self.numero == self.numero[0] * 11:
-            raise ValueError(
-                "CPF inválido: Não pode conter todos os dígitos iguais."
-            )
-
-        for i in (9, 10):
-            soma = sum(
-                int(self.numero[j]) * (i + 1 - j)
-                for j in range(i)
-            )
-            
-            digito = (soma * 10) % 11 % 10
-
-            if int(self.numero[i]) != digito:
-                raise ValueError(
-                    f"CPF inválido: Dígito verificador na posição {i} incorreto."
-                )
-                
-@dataclass(frozen=True)
-class Email:
-    endereco: str
-
-    def __post_init__(self) -> None:
-
-        if not self.endereco or not self.endereco.strip():
-            raise ValueError("E-mail não pode ser vazio")
-
-        if " " in self.endereco:
-            raise ValueError("E-mail não pode conter espaços")
-
-        if self.endereco.count("@") != 1:
-            raise ValueError("E-mail deve conter exatamente um '@'")
-
-        local, dominio = self.endereco.split("@")
-
-        if not local:
-            raise ValueError("E-mail inválido: parte local (antes do @) vazia")
-
-        if not dominio:
-            raise ValueError("E-mail inválido: domínio (depois do @) vazio")
-
-        if "." not in dominio:
-            raise ValueError("Domínio do e-mail inválido: falta o ponto (ex: .com)")
-            
-        if dominio.startswith(".") or dominio.endswith("."):
-            raise ValueError("Domínio do e-mail inválido: não pode começar ou terminar com ponto")
-
-@dataclass(frozen=True)
-class Telefone:
-    numero: str
-
-    def __post_init__(self) -> None:
-        
-        if not self.numero or not self.numero.strip():
-            raise ValueError("Telefone não pode ser vazio")
-
-        if not self.numero.isdigit():
-            raise ValueError("Telefone inválido: Deve conter somente números.")
-
-        tamanho = len(self.numero)
-        if tamanho not in (10, 11):
-            raise ValueError("Telefone inválido: Deve ter 10 (fixo) ou 11 (celular) dígitos.")
-
-        ddd = int(self.numero[:2])
-        if ddd < 11 or ddd > 99:
-            raise ValueError("Telefone inválido: DDD deve estar entre 11 e 99.")
-
-        if tamanho == 11 and self.numero[2] != '9':
-            raise ValueError("Telefone inválido: Celulares com 11 dígitos devem começar com '9'.")
-
-@dataclass(frozen=True)
 class Endereco:
     rua: str
     numero: str
@@ -198,3 +116,85 @@ class Agendamento:
                 "O agendamento não pode ser concluído, pois não está no status CONFIRMADO"
             )
         self.status = "CONCLUIDO"
+
+@dataclass(frozen=True)
+class CPF:
+    numero: str
+
+    def __post_init__(self):
+
+        if len(self.numero) != 11 or not self.numero.isdigit():
+            raise ValueError(
+                f"CPF inválido: Deve conter exatamente 11 dígitos. "
+                f"Recebido: {self.numero}"
+            )
+
+        if self.numero == self.numero[0] * 11:
+            raise ValueError(
+                "CPF inválido: Não pode conter todos os dígitos iguais."
+            )
+
+        for i in (9, 10):
+            soma = sum(
+                int(self.numero[j]) * (i + 1 - j)
+                for j in range(i)
+            )
+            
+            digito = (soma * 10) % 11 % 10
+
+            if int(self.numero[i]) != digito:
+                raise ValueError(
+                    f"CPF inválido: Dígito verificador na posição {i} incorreto."
+                )
+                
+@dataclass(frozen=True)
+class Email:
+    endereco: str
+
+    def __post_init__(self) -> None:
+
+        if not self.endereco or not self.endereco.strip():
+            raise ValueError("E-mail não pode ser vazio")
+
+        if " " in self.endereco:
+            raise ValueError("E-mail não pode conter espaços")
+
+        if self.endereco.count("@") != 1:
+            raise ValueError("E-mail deve conter exatamente um '@'")
+
+        local, dominio = self.endereco.split("@")
+
+        if not local:
+            raise ValueError("E-mail inválido: parte local (antes do @) vazia")
+
+        if not dominio:
+            raise ValueError("E-mail inválido: domínio (depois do @) vazio")
+
+        if "." not in dominio:
+            raise ValueError("Domínio do e-mail inválido: falta o ponto (ex: .com)")
+            
+        if dominio.startswith(".") or dominio.endswith("."):
+            raise ValueError("Domínio do e-mail inválido: não pode começar ou terminar com ponto")
+
+@dataclass(frozen=True)
+class Telefone:
+    numero: str
+
+    def __post_init__(self) -> None:
+        
+        if not self.numero or not self.numero.strip():
+            raise ValueError("Telefone não pode ser vazio")
+
+        if not self.numero.isdigit():
+            raise ValueError("Telefone inválido: Deve conter somente números.")
+
+        tamanho = len(self.numero)
+        if tamanho not in (10, 11):
+            raise ValueError("Telefone inválido: Deve ter 10 (fixo) ou 11 (celular) dígitos.")
+
+        ddd = int(self.numero[:2])
+        if ddd < 11 or ddd > 99:
+            raise ValueError("Telefone inválido: DDD deve estar entre 11 e 99.")
+
+        if tamanho == 11 and self.numero[2] != '9':
+            raise ValueError("Telefone inválido: Celulares com 11 dígitos devem começar com '9'.")
