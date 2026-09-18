@@ -117,3 +117,76 @@ Também decidi concentrar na entidade `Veterinario` a regra que impede a criaç�
 As disponibilidades consecutivas são permitidas, pois o término de uma disponibilidade pode coincidir com o início de outra sem que exista sobreposição entre os intervalos.
 
 A relação entre `Veterinario` e `Unidade` não foi implementada neste checkpoint, pois a implementação da entidade `Unidade` está sob responsabilidade de outro integrante do grupo.
+
+### Cauã Raphael Santos de Paula
+
+#### O que implementei
+
+Neste checkpoint fiquei responsável pelo agregado de **Unidade / Local de Atendimento**.
+
+Implementei a entidade `Unidade` e o objeto de valor `Endereco` no arquivo:
+
+`src/sistema_veterinario/domain/model.py`
+
+O objeto de valor `Endereco` possui os seguintes atributos:
+
+* `rua`
+* `numero`
+* `bairro`
+* `cidade`
+* `estado`
+* `cep`
+
+Também implementei as validações:
+
+* A rua é obrigatória.
+* A cidade é obrigatória.
+* O estado é obrigatório.
+* O CEP deve possuir exatamente 8 caracteres numéricos.
+* O objeto `Endereco` foi implementado como imutável utilizando `@dataclass(frozen=True)`.
+
+A entidade `Unidade` possui os seguintes atributos:
+
+* `id_unidade`
+* `nome`
+* `endereco`
+* `atende_domicilio`
+
+Também implementei as seguintes regras:
+
+* O nome da unidade é obrigatório.
+* Caso a unidade não realize atendimento a domicílio, ela deve possuir um endereço.
+* A igualdade entre duas unidades é definida pelo `id_unidade`.
+* O `id_unidade` também é utilizado para gerar o `hash` da entidade.
+
+Também criei testes unitários no arquivo tanto para unidade quanto para endereco:
+
+`tests/unit/test_unidade_endereco.py`
+
+Os testes implementados verificam:
+
+* Criação de um endereço válido.
+* Erro ao criar um endereço sem rua.
+* Erro ao criar um endereço com CEP inválido.
+* Erro ao criar uma unidade com nome vazio.
+* Erro ao criar uma unidade física sem endereço.
+* Criação de uma unidade física com endereço válido.
+* Duas unidades com o mesmo ID são consideradas iguais.
+
+#### Commits
+
+Commits realizados neste checkpoint:
+
+* `5224767` - `feat: adiciona objeto de valor Endereco`
+* `3b833f7` - `feat: adiciona entidade Unidade`
+* `b400d4e` - `test: adiciona testes de endereco e unidade`
+
+#### Decisões de projeto
+
+O `Endereco` foi implementado como um **Objeto de Valor**, pois não possui uma identidade própria e é definido pelos seus atributos. Por isso, também foi utilizado `@dataclass(frozen=True)` para manter o endereço imutável.
+
+A `Unidade` foi implementada como uma **Entidade**, pois possui um identificador próprio (`id_unidade`). Dessa forma, duas unidades são consideradas iguais quando possuem o mesmo ID, mesmo que seus outros atributos sejam diferentes.
+
+O endereço é obrigatório somente para unidades que **não realizam atendimento a domicílio**, pois uma unidade física precisa informar sua localização, enquanto uma unidade que atende exclusivamente em domicílio pode não possuir um endereço físico.
+
+A validação do CEP foi definida para aceitar somente valores com **8 dígitos numéricos**, seguindo o formato básico do CEP brasileiro.
