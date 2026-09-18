@@ -182,7 +182,7 @@ class Especie:
         return self.id_especie == outra.id_especie
 
     def __hash__(self):
-            return hash(self.id_especie)
+        return hash(self.id_especie)
 
 @dataclass
 class Raca:
