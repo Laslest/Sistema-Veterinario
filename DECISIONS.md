@@ -186,3 +186,91 @@ A `Unidade` foi implementada como uma **Entidade**, pois possui um identificador
 O endereço é obrigatório somente para unidades que **não realizam atendimento a domicílio**, pois uma unidade física precisa informar sua localização, enquanto uma unidade que atende exclusivamente em domicílio pode não possuir um endereço físico.
 
 A validação do CEP foi definida para aceitar somente valores com **8 dígitos numéricos**, seguindo o formato básico do CEP brasileiro.
+
+### David Pereira Ramos
+
+#### O que implementei
+
+Neste checkpoint fiquei responsável pelo agregado de Cliente / Paciente.
+
+Implementei as entidades Cliente, Paciente, Especie e Raca, além dos objetos de valor CPF e Telefone, no arquivo:
+
+`src/sistema_veterinario/domain/model.py`
+
+A entidade `Cliente` foi definida como a raiz do agregado e possui os seguintes atributos:
+
+- `id_cliente`
+- `nome`
+- `cpf`
+- `telefone`
+- `endereco`
+- coleção de `pacientes`
+
+A entidade `Paciente` possui:
+
+- `id_paciente`
+- `nome`
+- `data_nascimento`
+- `raca_id`
+
+Também implementei `Especie` e `Raca`, ambas com identificador próprio. A `Raca` possui também o identificador da espécie à qual pertence.
+
+O objeto de valor `CPF` possui validação de quantidade de dígitos, rejeição de números com todos os dígitos iguais e validação dos dígitos verificadores.
+
+O objeto de valor `Telefone` valida números com 10 ou 11 dígitos, DDD entre 11 e 99 e, para celulares, o dígito `9` na posição correspondente.
+
+Também implementei regras de validação para `Cliente`, `Paciente`, `Especie` e `Raca`, como identificadores maiores que zero e nomes obrigatórios. A data de nascimento do paciente não pode estar no futuro.
+
+No `Cliente`, foram adicionadas as operações:
+
+- `adicionar_paciente()`: adiciona um paciente à coleção do cliente e impede pacientes duplicados pelo `id_paciente`;
+- `buscar_paciente()`: busca um paciente pelo identificador e gera erro quando ele não pertence ao cliente;
+- `remover_paciente()`: remove um paciente pelo identificador e gera erro quando ele não pertence ao cliente.
+
+Também criei testes unitários nos arquivos:
+
+- `tests/unit/test_cliente.py`
+- `tests/unit/test_cpf.py`
+- `tests/unit/test_especie.py`
+- `tests/unit/test_paciente.py`
+- `tests/unit/test_raca.py`
+- `tests/unit/test_telefone.py`
+
+Os testes implementados verificam:
+
+- criação válida de `Cliente`, `Paciente`, `Especie` e `Raca`;
+- validações dos objetos de valor `CPF` e `Telefone`;
+- validações dos identificadores e nomes das entidades;
+- validação da data de nascimento do paciente;
+- igualdade das entidades pelo identificador;
+- adição de pacientes ao cliente;
+- rejeição de pacientes duplicados;
+- busca de pacientes existentes e tratamento de pacientes inexistentes;
+- remoção de pacientes existentes e tratamento de pacientes inexistentes.
+
+#### Commits
+
+Commits realizados neste checkpoint:
+
+- `721c630` - `feat: adicionado os Value Objects (Objetos de Valor) CPF e Email referente ao agregado Cliente / Paciente`
+- `9eb3e78` - `adicionado o Value Object Telefone referente ao agregado Cliente / Paciente`
+- `275eca8` - `refactor: Reorganização na posição do código referente ao agregado Cliente / Paciente`
+- `4b8674c` - `feat: remoção do Objeto de Valor Email e adicionado as Entidades auxiliares Espécie e Raça para o Agregado Cliente / Paciente`
+- `ca43c8a` - `feat: adicionado a entidade Paciente a respeito do Agregado Cliente / Paciente`
+- `29e37f3` - `feat: adiciona a entidade Cliente, Raiz do Agregado Cliente / Paciente`
+- `e93b1f1` - `test: adiciona testes para CPF a respeito do Agregado Cliente / Paciente`
+- `a57f687` - `test: adiciona testes para Telefone a respeito do Agregado Cliente / Paciente`
+- `eb3a323` - `test: adiciona testes para Especie a respeito do Agregado Cliente / Paciente`
+- `1747253` - `test: adiciona testes para Raca a respeito do Agregado Cliente / Paciente`
+- `3a386af` - `test: adiciona testes para Paciente do Agregado Cliente / Paciente`
+- `e4de5de` - `test: adiciona testes para Cliente, Raiz do Agregado Cliente / Paciente`
+
+#### Decisões de projeto
+
+Decidi representar `Cliente` como a **raiz do agregado Cliente / Paciente**, mantendo sob seu controle a associação com os pacientes. Por isso, as operações de adicionar, buscar e remover pacientes ficam na própria entidade `Cliente`, permitindo que o agregado mantenha a regra de não duplicidade dos pacientes associados.
+
+Decidi representar `CPF` e `Telefone` como **Objetos de Valor**, pois não possuem identidade própria e são definidos pelos seus respectivos valores. Ambos foram implementados como imutáveis utilizando `@dataclass(frozen=True)`.
+
+Decidi representar `Paciente`, `Especie` e `Raca` como **Entidades**, pois possuem identificadores próprios. `Especie` e `Raca` são entidades de domínio relacionadas ao agregado Cliente / Paciente e utilizadas na caracterização dos pacientes. A `Raca` possui uma referência à `Especie`, enquanto o `Paciente` mantém a referência à `Raca` por meio de seu identificador.
+
+Inicialmente, implementei `Email` como um **Objeto de Valor**, porém, após revisar o modelo conceitual, decidi removê-lo da implementação por não fazer parte dos atributos definidos para o agregado Cliente / Paciente.
