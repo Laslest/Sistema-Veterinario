@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from datetime import datetime, date, time
-from datetime import time
 from typing import Optional, List
 
 @dataclass(frozen=True)
@@ -124,10 +123,7 @@ class CPF:
     def __post_init__(self):
 
         if len(self.numero) != 11 or not self.numero.isdigit():
-            raise ValueError(
-                f"CPF inválido: Deve conter exatamente 11 dígitos. "
-                f"Recebido: {self.numero}"
-            )
+            raise ValueError("CPF inválido: Deve conter exatamente 11 dígitos.")
 
         if self.numero == self.numero[0] * 11:
             raise ValueError("CPF inválido: Não pode conter todos os dígitos iguais.")
@@ -141,9 +137,7 @@ class CPF:
             digito = (soma * 10) % 11 % 10
 
             if int(self.numero[i]) != digito:
-                raise ValueError(
-                    f"CPF inválido: Dígito verificador na posição {i} incorreto."
-                )
+                raise ValueError("CPF inválido.")
                 
 @dataclass(frozen=True)
 class Telefone:
@@ -247,3 +241,75 @@ class Paciente:
         
     def __hash__(self):
         return hash(self.id_paciente)
+
+@dataclass
+class Cliente:
+
+    id_cliente: int
+    nome: str
+    cpf: CPF
+    telefone: Telefone
+    endereco: Endereco
+    pacientes: List[Paciente] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        
+        if not isinstance(self.id_cliente, int) or self.id_cliente <= 0:
+            raise ValueError("O ID do cliente deve ser um número inteiro maior que zero.")
+
+        if not self.nome or not self.nome.strip():
+            raise ValueError("O nome do cliente não pode ser vazio.")
+
+        if not isinstance(self.cpf, CPF):
+            raise ValueError("O CPF deve ser uma instância válida de CPF.")
+
+        if not isinstance(self.telefone, Telefone):
+            raise ValueError(
+                "O telefone deve ser uma instância válida de Telefone.")
+
+        if not isinstance(self.endereco, Endereco):
+            raise ValueError(
+                "O endereço deve ser uma instância válida de Endereco."
+            )
+
+    def adicionar_paciente(self, paciente: Paciente) -> None:
+        """Adiciona um paciente à coleção do cliente."""
+        if not isinstance(paciente, Paciente):
+            raise ValueError("O objeto deve ser uma instância da classe Paciente.")
+
+        if any(p.id_paciente == paciente.id_paciente for p in self.pacientes):
+            raise ValueError(
+                f"Paciente com ID {paciente.id_paciente} já está cadastrado "
+                f"para este cliente."
+            )
+
+        self.pacientes.append(paciente)
+
+    def buscar_paciente(self, paciente_id: int) -> Paciente:
+        """Busca um paciente na coleção; se não pertencer, lança erro."""
+        for paciente in self.pacientes:
+            if paciente.id_paciente == paciente_id:
+                return paciente
+
+        raise ValueError(f"Paciente com ID {paciente_id} não encontrado.")
+
+    def remover_paciente(self, paciente_id: int) -> None:
+        """Remove um paciente; se não pertencer, lança erro."""
+        for paciente in self.pacientes:
+            if paciente.id_paciente == paciente_id:
+                self.pacientes.remove(paciente)
+                return
+
+        raise ValueError(
+            f"Não foi possível remover: Paciente com ID {paciente_id} "
+            f"não encontrado."
+        )
+
+    def __eq__(self, outro) -> bool:
+        """Dois clientes são iguais quando possuem o mesmo id_cliente."""
+        if not isinstance(outro, Cliente):
+            return False
+        return self.id_cliente == outro.id_cliente
+
+    def __hash__(self) -> int:
+        return hash(self.id_cliente)
