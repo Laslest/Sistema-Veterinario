@@ -10,7 +10,7 @@ Os clientes poderão cadastrar seus animais e realizar agendamentos, enquanto os
 
 - Davi Gesteira Dos Anjos Paula - @Laslest
 - David Pereira Ramos - @dramos-cpu
-- Cauã Raphael Santos de Paula - @cauraphael
+- Cauã Raphael Santos de Paula - @cauaraphael
 - Carlos Victor Dos Santos Dantas - @VictorSantosD
 
 ## Quem faz o quê
@@ -19,5 +19,5 @@ Os clientes poderão cadastrar seus animais e realizar agendamentos, enquanto os
 |---|---|---|
 | Davi Gesteira dos Anjos Paula | Agendamento | @Laslest |
 | David Pereira Ramos | Cliente / Paciente | @dramos-cpu |
-| Cauã Raphael Santos de Paula | Unidade / Local de Atendimento | @cauraphael |
+| Cauã Raphael Santos de Paula | Unidade / Local de Atendimento | @cauaraphael |
 | Carlos Victor Dos Santos Dantas | Veterinário | @VictorSantosD |
