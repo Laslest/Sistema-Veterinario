@@ -56,8 +56,6 @@ A intenção é manter as regras e invariantes do agregado centralizadas no dom�
 
 Também defini que todo novo agendamento começa no estado AGENDADO. A partir desse estado, as mudanças posteriores devem ocorrer exclusivamente através das operações disponibilizadas pela própria entidade.
 
-## Fase 1 - Checkpoint 1
-
 ### Carlos Victor dos Santos Dantas
 
 #### O que implementei
@@ -115,8 +113,6 @@ Decidi representar `Disponibilidade` como um objeto de valor imutável, contendo
 Também decidi concentrar na entidade `Veterinario` a regra que impede a criação de disponibilidades conflitantes. Dessa maneira, o próprio agregado mantém a consistência dos horários cadastrados para o veterinário.
 
 As disponibilidades consecutivas são permitidas, pois o término de uma disponibilidade pode coincidir com o início de outra sem que exista sobreposição entre os intervalos.
-
-A relação entre `Veterinario` e `Unidade` não foi implementada neste checkpoint, pois a implementação da entidade `Unidade` está sob responsabilidade de outro integrante do grupo.
 
 ### Cauã Raphael Santos de Paula
 
