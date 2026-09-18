@@ -130,9 +130,7 @@ class CPF:
             )
 
         if self.numero == self.numero[0] * 11:
-            raise ValueError(
-                "CPF inválido: Não pode conter todos os dígitos iguais."
-            )
+            raise ValueError("CPF inválido: Não pode conter todos os dígitos iguais.")
 
         for i in (9, 10):
             soma = sum(
@@ -147,35 +145,6 @@ class CPF:
                     f"CPF inválido: Dígito verificador na posição {i} incorreto."
                 )
                 
-@dataclass(frozen=True)
-class Email:
-    endereco: str
-
-    def __post_init__(self) -> None:
-
-        if not self.endereco or not self.endereco.strip():
-            raise ValueError("E-mail não pode ser vazio")
-
-        if " " in self.endereco:
-            raise ValueError("E-mail não pode conter espaços")
-
-        if self.endereco.count("@") != 1:
-            raise ValueError("E-mail deve conter exatamente um '@'")
-
-        local, dominio = self.endereco.split("@")
-
-        if not local:
-            raise ValueError("E-mail inválido: parte local (antes do @) vazia")
-
-        if not dominio:
-            raise ValueError("E-mail inválido: domínio (depois do @) vazio")
-
-        if "." not in dominio:
-            raise ValueError("Domínio do e-mail inválido: falta o ponto (ex: .com)")
-            
-        if dominio.startswith(".") or dominio.endswith("."):
-            raise ValueError("Domínio do e-mail inválido: não pode começar ou terminar com ponto")
-
 @dataclass(frozen=True)
 class Telefone:
     numero: str
@@ -198,3 +167,47 @@ class Telefone:
 
         if tamanho == 11 and self.numero[2] != '9':
             raise ValueError("Telefone inválido: Celulares com 11 dígitos devem começar com '9'.")
+
+@dataclass
+class Especie:
+    id_especie: int
+    nome: str
+
+    def __post_init__(self):
+
+        if not isinstance(self.id_especie, int) or self.id_especie <= 0:
+            raise ValueError("O ID da espécie deve ser um número inteiro maior que zero.")
+
+        if not self.nome or self.nome.strip() == "":
+            raise ValueError("O nome da espécie não pode ser vazio.")
+
+    def __eq__(self, outra):
+        if not isinstance(outra, Especie):
+            return False
+
+        return self.id_especie == outra.id_especie
+
+@dataclass
+class Raca:
+    id_raca: int
+    nome: str
+    id_especie: int
+
+    def __post_init__(self):
+        if not isinstance(self.id_raca, int) or self.id_raca <= 0:
+            raise ValueError("O ID da raça deve ser um número inteiro maior que zero.")
+
+        if not self.nome or self.nome.strip() == "":
+            raise ValueError("O nome da raça não pode ser vazio.")
+
+        if not isinstance(self.id_especie, int) or self.id_especie <= 0:
+            raise ValueError("O ID da espécie deve ser um número inteiro maior que zero.")
+
+    def __eq__(self, outra):
+        if not isinstance(outra, Raca):
+            return False
+
+        return self.id_raca == outra.id_raca
+
+    def __hash__(self):
+        return hash(self.id_raca)
