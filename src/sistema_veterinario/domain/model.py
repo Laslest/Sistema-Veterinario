@@ -1,7 +1,7 @@
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import datetime, date, time
 from datetime import time
-from typing import Optional
+from typing import Optional, List
 
 @dataclass(frozen=True)
 class Endereco:
@@ -187,6 +187,9 @@ class Especie:
 
         return self.id_especie == outra.id_especie
 
+    def __hash__(self):
+            return hash(self.id_especie)
+
 @dataclass
 class Raca:
     id_raca: int
@@ -211,3 +214,36 @@ class Raca:
 
     def __hash__(self):
         return hash(self.id_raca)
+
+@dataclass
+class Paciente:
+    id_paciente: int
+    nome: str
+    data_nascimento: date
+    raca_id: int
+
+    def __post_init__(self):
+
+        if not isinstance(self.id_paciente, int) or self.id_paciente <= 0:
+            raise ValueError("O ID do paciente deve ser um número inteiro maior que zero.")
+
+        if not self.nome or not self.nome.strip():
+            raise ValueError("O nome do paciente não pode ser vazio.")
+
+        if not isinstance(self.data_nascimento, date):
+            raise ValueError("A data de nascimento deve ser uma data válida.")
+
+        if self.data_nascimento > date.today():
+            raise ValueError("A data de nascimento não pode estar no futuro.")
+
+        if not isinstance(self.raca_id, int) or self.raca_id <= 0:
+            raise ValueError("O ID da raça deve ser um número inteiro maior que zero.")
+
+    def __eq__(self, outro):
+        if not isinstance(outro, Paciente):
+            return False
+            
+        return self.id_paciente == outro.id_paciente
+        
+    def __hash__(self):
+        return hash(self.id_paciente)
