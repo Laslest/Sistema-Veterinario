@@ -17,10 +17,10 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Instalar pytest
-        run: python -m pip install pytest
+      - name: Instalar dependencias
+        run: python -m pip install pytest sqlalchemy
 
-      - name: Rodar testes unitarios
+      - name: Rodar testes
         env:
           PYTHONPATH: src
-        run: python -m pytest tests/unit -v
+        run: python -m pytest tests -v
