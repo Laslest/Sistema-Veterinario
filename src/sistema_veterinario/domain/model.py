@@ -260,7 +260,6 @@ class Cliente:
     nome: str
     cpf: CPF
     telefone: Telefone
-    endereco: Endereco
     pacientes: List[Paciente] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -277,11 +276,6 @@ class Cliente:
         if not isinstance(self.telefone, Telefone):
             raise ValueError(
                 "O telefone deve ser uma instância válida de Telefone.")
-
-        if not isinstance(self.endereco, Endereco):
-            raise ValueError(
-                "O endereço deve ser uma instância válida de Endereco."
-            )
 
     def adicionar_paciente(self, paciente: Paciente) -> None:
         """Adiciona um paciente à coleção do cliente."""

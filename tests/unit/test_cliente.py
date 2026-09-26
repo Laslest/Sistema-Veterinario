@@ -4,7 +4,6 @@ import pytest
 
 from sistema_veterinario.domain.model import (
     Cliente,
-    Endereco,
     CPF,
     Paciente,
     Telefone,
@@ -15,16 +14,6 @@ def criar_cpf_valido():
 
 def criar_telefone_valido():
     return Telefone(numero="11999999999")
-
-def criar_endereco_valido():
-    return Endereco(
-        rua="Rua A",
-        numero="100",
-        bairro="Centro",
-        cidade="Niterói",
-        estado="RJ",
-        cep="24000000",
-    )
 
 def criar_paciente_valido(id_paciente: int = 1):
     return Paciente(
@@ -40,7 +29,6 @@ def criar_cliente_valido(id_cliente: int = 1) -> Cliente:
         nome="João Silva",
         cpf=criar_cpf_valido(),
         telefone=criar_telefone_valido(),
-        endereco=criar_endereco_valido(),
     )
 
 def test_cliente_valido_e_criado_com_sucesso():
@@ -57,7 +45,6 @@ def test_cliente_com_id_zero_gera_erro():
             nome="João Silva",
             cpf=criar_cpf_valido(),
             telefone=criar_telefone_valido(),
-            endereco=criar_endereco_valido(),
         )
 
 def test_cliente_com_nome_vazio_gera_erro():
@@ -67,7 +54,6 @@ def test_cliente_com_nome_vazio_gera_erro():
             nome="",
             cpf=criar_cpf_valido(),
             telefone=criar_telefone_valido(),
-            endereco=criar_endereco_valido(),
         )
 
 def test_adicionar_paciente_ao_cliente_com_sucesso():
@@ -124,14 +110,6 @@ def test_dois_clientes_com_mesmo_id_sao_iguais():
         nome="Maria Souza",
         cpf=CPF(numero="11144477735"),
         telefone=Telefone(numero="21988888888"),
-        endereco=Endereco(
-            rua="Rua B",
-            numero="200",
-            bairro="Icaraí",
-            cidade="Niterói",
-            estado="RJ",
-            cep="24200000",
-        ),
     )
 
     assert cliente1 == cliente2
