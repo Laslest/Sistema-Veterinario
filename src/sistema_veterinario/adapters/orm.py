@@ -1,6 +1,6 @@
 from sqlalchemy import Column, DateTime, Time, Integer, String, Table, ForeignKey
 from sqlalchemy.orm import registry
-from sistema_veterinario.domain.model import Agendamento, Veterinario, Disponibilidade
+from sistema_veterinario.domain.model import Agendamento, Veterinario
 
 mapper_registry = registry()
 metadata = mapper_registry.metadata
