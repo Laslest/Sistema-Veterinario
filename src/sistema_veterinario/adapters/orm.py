@@ -77,3 +77,21 @@ def start_mappers():
         Agendamento,
         agendamentos,
     )
+
+    mapper_registry.map_imperatively(
+        Paciente,
+        pacientes,
+        properties={
+            "_id_cliente": pacientes.c.id_cliente,
+        },
+    )
+
+    mapper_registry.map_imperatively(
+        Cliente,
+        clientes,
+        properties={
+            "cpf": composite(CPF, clientes.c.cpf_numero),
+            "telefone": composite(Telefone, clientes.c.telefone_numero),
+            "pacientes": relationship(Paciente),
+        },
+    )
