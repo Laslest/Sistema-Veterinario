@@ -1,7 +1,7 @@
-from sqlalchemy import Column, DateTime, Time, Integer, String, Table, ForeignKey
-from sqlalchemy.orm import registry
+from sqlalchemy import Column, DateTime, Time, Integer, String, Table, ForeignKey, Date
+from sqlalchemy.orm import registry, composite, relationship
 
-from sistema_veterinario.domain.model import Agendamento, Veterinario
+from sistema_veterinario.domain.model import Agendamento, Veterinario, Cliente, Paciente, CPF, Telefone
 
 
 mapper_registry = registry()
@@ -41,6 +41,25 @@ agendamentos = Table(
     Column("id_tipo_agendamento", Integer, nullable=False),
     Column("data_hora", DateTime, nullable=False),
     Column("status", String, nullable=False),
+)
+
+clientes = Table(
+    "clientes",
+    metadata,
+    Column("id_cliente", Integer, primary_key=True),
+    Column("nome", String, nullable=False),
+    Column("cpf_numero", String(11), nullable=False),
+    Column("telefone_numero", String(11), nullable=False),
+)
+
+pacientes = Table(
+    "pacientes",
+    metadata,
+    Column("id_paciente", Integer, primary_key=True),
+    Column("id_cliente", ForeignKey("clientes.id_cliente"), nullable=False),
+    Column("nome", String, nullable=False),
+    Column("data_nascimento", Date, nullable=False),
+    Column("raca_id", Integer, nullable=False),
 )
 
 
