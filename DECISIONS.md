@@ -551,3 +551,144 @@ Também optei por não executar `commit()` dentro do método `add()` do reposit�
 Para os testes que não precisam utilizar um banco de dados, implementei `FakeAgendamentoRepository`. A implementação utiliza um dicionário em memória indexado pelo `id_agendamento`, mantendo as operações básicas compatíveis com o contrato utilizado pelo repositório real.
 
 No teste de integração, optei por utilizar SQLite em memória. Isso permite exercitar o mapeamento ORM e o repositório SQLAlchemy utilizando um banco real durante o teste, sem criar um arquivo de banco permanente no projeto.
+
+
+### David Pereira Ramos
+
+#### O que implementei
+
+Neste checkpoint continuei responsável pelo agregado de Cliente / Paciente, trabalhando principalmente no alinhamento do modelo de domínio, no mapeamento ORM, na implementação dos repositórios e nos testes relacionados à persistência do agregado.
+
+Durante a revisão do modelo de domínio, removi da entidade `Cliente` qualquer referência a `Endereco`.
+
+Essa alteração foi realizada após revisar o modelo conceitual do sistema e verificar que endereço não faz parte dos atributos definidos para `Cliente`. O objeto de valor `Endereco` pertence ao contexto de `Unidade / Local de Atendimento`, não sendo necessário manter essa informação também no agregado Cliente / Paciente.
+
+Com essa alteração, a entidade `Cliente` passou a permanecer com os seguintes atributos:
+
+- `id_cliente`;
+- `nome`;
+- `cpf`;
+- `telefone`;
+- coleção de `pacientes`.
+
+Os testes unitários de `Cliente` também foram atualizados para acompanhar essa alteração no modelo.
+
+Na camada de persistência, implementei o mapeamento ORM do agregado Cliente / Paciente no arquivo:
+
+`src/sistema_veterinario/adapters/orm.py`
+
+Foram criadas as tabelas `clientes` e `pacientes`.
+
+A tabela `clientes` armazena:
+
+- `id_cliente`;
+- `nome`;
+- `cpf_numero`;
+- `telefone_numero`.
+
+A tabela `pacientes` armazena:
+
+- `id_paciente`;
+- `id_cliente`;
+- `nome`;
+- `data_nascimento`;
+- `raca_id`.
+
+O campo `id_cliente` da tabela `pacientes` foi definido como chave estrangeira para a tabela `clientes`, permitindo representar na persistência a associação entre um cliente e seus pacientes.
+
+Também foi realizado o mapeamento das entidades `Cliente` e `Paciente`.
+
+Os objetos de valor `CPF` e `Telefone` foram mapeados utilizando `composite()`, permitindo que continuem sendo representados como objetos do domínio mesmo sendo armazenados no banco através dos campos `cpf_numero` e `telefone_numero`.
+
+A coleção `pacientes` de `Cliente` foi configurada utilizando um relacionamento ORM, permitindo que os pacientes associados sejam persistidos e recuperados juntamente com a raiz do agregado.
+
+No arquivo:
+
+`src/sistema_veterinario/adapters/repository.py`
+
+implementei o `SqlAlchemyClienteRepository`, seguindo o contrato definido por `AbstractRepository`.
+
+O repositório possui as operações:
+
+- `add()`: adiciona um cliente à sessão do SQLAlchemy;
+- `get()`: recupera um cliente por meio do seu `id_cliente`.
+
+Não foi criado um repositório separado para `Paciente`, pois `Cliente` é a raiz do agregado Cliente / Paciente e controla sua coleção de pacientes.
+
+Também foram criados testes de integração no arquivo:
+
+`tests/integration/test_repository_cliente.py`
+
+Os testes utilizam SQLite em memória e verificam:
+
+- persistência e recuperação de um `Cliente`;
+- recuperação correta dos atributos `id_cliente` e `nome`;
+- reconstrução dos objetos de valor `CPF` e `Telefone` após a recuperação pelo ORM;
+- persistência de um `Cliente` juntamente com um `Paciente`;
+- recuperação da coleção de pacientes associada ao cliente;
+- recuperação dos atributos `id_paciente`, `nome`, `data_nascimento` e `raca_id`;
+- retorno de `None` ao buscar um cliente com identificador inexistente.
+
+Após realizar o `commit()`, foi utilizado `session.expunge_all()` antes da busca nos testes de persistência. Dessa forma, os objetos são removidos da sessão e precisam ser carregados novamente a partir do banco de dados, permitindo verificar efetivamente o funcionamento do mapeamento ORM.
+
+Os testes de integração utilizam a inicialização centralizada dos mapeamentos definida em:
+
+`tests/integration/conftest.py`
+
+evitando que `start_mappers()` seja executado repetidamente em cada teste.
+
+Também implementei o:
+
+`FakeClienteRepository`
+
+no arquivo:
+
+`src/sistema_veterinario/adapters/repository.py`
+
+O repositório fake mantém os clientes em memória utilizando um dicionário, com o `id_cliente` sendo utilizado como chave.
+
+Foi criado o arquivo:
+
+`tests/unit/test_fake_repository_cliente.py`
+
+Os testes verificam:
+
+- adição de um cliente ao `FakeClienteRepository`;
+- recuperação de um cliente pelo seu identificador;
+- preservação dos dados do cliente recuperado;
+- preservação dos valores de `CPF` e `Telefone`;
+- retorno de `None` ao buscar um identificador inexistente.
+
+Ao final das alterações, os testes unitários e de integração permaneceram passando.
+
+#### Commits
+
+Commits realizados neste checkpoint:
+
+- `93f1115` - `refactor: alinha cliente ao modelo de domínio e atualiza teste para cliente`
+- `9e6f465` - `feat: adiciona tabelas Cliente e Paciente ao ORM`
+- `6d248c0` - `feat: adiciona mapeamento ORM do agregado Cliente/Paciente`
+- `72fc4cc` - `feat: adiciona repositório SQLAlchemy de Cliente`
+- `4242c70` - `test: adiciona testes de integração do repositório de Cliente`
+- `0cdbe4c` - `feat: adiciona FakeClienteRepository`
+- `1bbe0ae` - `test: adiciona testes do FakeRepository de Cliente`
+
+#### Decisões de projeto
+
+Durante este checkpoint, decidi remover `Endereco` da entidade `Cliente` após revisar novamente o modelo conceitual do sistema. O endereço não está definido como um atributo de `Cliente` e seu uso no domínio está associado à entidade `Unidade`. Manter um endereço também em `Cliente` faria com que o agregado possuísse uma informação que não estava prevista no modelo atual, além de criar um acoplamento desnecessário com um conceito pertencente a outro agregado.
+
+Por esse motivo, o agregado Cliente / Paciente permaneceu concentrado nas informações necessárias ao cliente e no controle de sua coleção de pacientes, enquanto `Endereco` continua sendo utilizado no agregado responsável por Unidade / Local de Atendimento.
+
+Mantive `Cliente` como a raiz do agregado Cliente / Paciente. Por isso, implementei apenas um repositório para `Cliente`, sem criar um repositório separado para `Paciente`. Os pacientes são persistidos e recuperados através do relacionamento existente com a raiz do agregado.
+
+No ORM, decidi persistir a associação entre `Cliente` e `Paciente` através da chave estrangeira `id_cliente` na tabela `pacientes`. Dessa maneira, o banco consegue representar a relação entre as duas entidades sem exigir que essa chave estrangeira faça parte da interface pública da entidade `Paciente` no domínio.
+
+Para `CPF` e `Telefone`, mantive a representação como Objetos de Valor e utilizei `composite()` no mapeamento ORM. Dessa forma, o banco armazena seus valores em colunas simples, enquanto a aplicação continua trabalhando com instâncias de `CPF` e `Telefone` após a recuperação dos dados.
+
+O `SqlAlchemyClienteRepository` foi mantido com apenas as operações `add()` e `get()`, seguindo o contrato atual de `AbstractRepository`. Não foram adicionadas operações como `list()` sem que existisse um caso de uso que justificasse essa necessidade.
+
+Também mantive o controle de `commit()` fora do método `add()`. Dessa forma, o repositório fica responsável por adicionar e recuperar o agregado, enquanto o controle da transação permanece externo ao repositório.
+
+Para os testes que não precisam acessar o banco de dados, implementei o `FakeClienteRepository`. A implementação utiliza um dicionário em memória indexado pelo `id_cliente` e mantém as mesmas operações básicas utilizadas pelo repositório SQLAlchemy.
+
+Nos testes de integração, utilizei SQLite em memória para exercitar o mapeamento ORM e o repositório utilizando um banco real durante os testes, sem criar arquivos permanentes no projeto. Também utilizei `session.expunge_all()` antes da recuperação dos dados para garantir que os objetos fossem carregados novamente a partir do banco de dados.
