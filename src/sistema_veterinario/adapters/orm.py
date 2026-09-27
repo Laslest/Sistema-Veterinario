@@ -1,7 +1,7 @@
-from sqlalchemy import Column, DateTime, Time, Integer, String, Table, ForeignKey, Date, Boolean
+from sqlalchemy import Column, DateTime, Time, Integer, String, Table, ForeignKey, Date, Boolean, Enum
 from sqlalchemy.orm import registry, composite, relationship
 
-from sistema_veterinario.domain.model import Agendamento, Veterinario, Cliente, Paciente, CPF, Telefone, Unidade, Endereco
+from sistema_veterinario.domain.model import Agendamento, Veterinario, Cliente, Paciente, CPF, Telefone, Unidade, Endereco, Disponibilidade, DiaSemana
 
 
 mapper_registry = registry()
@@ -12,22 +12,27 @@ veterinarios = Table(
     "veterinarios",
     metadata,
     Column("id_veterinario", Integer, primary_key=True),
+    Column("email", String, nullable=False),
+    Column("senha_hash", String, nullable=False),
     Column("nome", String, nullable=False),
     Column("crmv", String, nullable=False),
+    Column("especialidade", String, nullable=False)
 )
 
 
 disponibilidades = Table(
     "disponibilidades",
     metadata,
+    Column("id_disponibilidade", Integer, primary_key=True),
     Column(
         "id_veterinario",
         Integer,
         ForeignKey("veterinarios.id_veterinario"),
-        primary_key=True,
+        nullable=False,
     ),
-    Column("inicio", Time, primary_key=True),
-    Column("fim", Time, primary_key=True),
+    Column("dia_semana", Enum(DiaSemana), nullable=False),
+    Column("hora_inicio", Time, nullable=False),
+    Column("hora_fim", Time, nullable=False),
 )
 
 
@@ -82,8 +87,15 @@ def start_mappers():
     """
 
     mapper_registry.map_imperatively(
+        Disponibilidade,
+        disponibilidades,
+    )
+    mapper_registry.map_imperatively(
         Veterinario,
         veterinarios,
+        properties={
+            "disponibilidades": relationship(Disponibilidade, cascade="all, delete-orphan"),
+        },
     )
 
     mapper_registry.map_imperatively(
