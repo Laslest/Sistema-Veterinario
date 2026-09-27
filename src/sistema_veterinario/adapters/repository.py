@@ -39,6 +39,7 @@ class SqlAlchemyClienteRepository(AbstractRepository):
     def get(self, id_cliente: int):
         return self.session.get(Cliente, id_cliente)
 
+
 class SqlAlchemyVeterinarioRepository(AbstractRepository):
 
     def __init__(self, session: Session):
@@ -61,3 +62,15 @@ class FakeAgendamentoRepository(AbstractRepository):
 
     def get(self, id_agendamento: int):
         return self.agendamentos.get(id_agendamento)
+
+
+class FakeVeterinarioRepository(AbstractRepository):
+
+    def __init__(self):
+        self.veterinarios = {}
+
+    def add(self, veterinario: Veterinario):
+        self.veterinarios[veterinario.id_veterinario] = veterinario
+
+    def get(self, id_veterinario: int):
+        return self.veterinarios.get(id_veterinario)
