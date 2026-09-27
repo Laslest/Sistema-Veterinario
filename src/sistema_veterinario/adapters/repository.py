@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from sqlalchemy.orm import Session
 
-from sistema_veterinario.domain.model import Agendamento, Cliente
+from sistema_veterinario.domain.model import Agendamento, Cliente, Veterinario
 
 
 class AbstractRepository(ABC):
@@ -38,6 +38,17 @@ class SqlAlchemyClienteRepository(AbstractRepository):
 
     def get(self, id_cliente: int):
         return self.session.get(Cliente, id_cliente)
+
+class SqlAlchemyVeterinarioRepository(AbstractRepository):
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def add(self, veterinario: Veterinario):
+        self.session.add(veterinario)
+
+    def get(self, id_veterinario: int):
+        return self.session.get(Veterinario, id_veterinario)
 
 
 class FakeAgendamentoRepository(AbstractRepository):
