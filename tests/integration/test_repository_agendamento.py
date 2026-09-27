@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from sistema_veterinario.adapters.orm import metadata, start_mappers
-from sistema_veterinario.adapters.repository import SqlAlchemyRepository
+from sistema_veterinario.adapters.repository import SqlAlchemyAgendamentoRepository
 from sistema_veterinario.domain.model import Agendamento
 
 
@@ -29,7 +29,7 @@ def test_repository_salva_e_busca_agendamento():
         data_hora=data_futura,
     )
 
-    repository = SqlAlchemyRepository(session)
+    repository = SqlAlchemyAgendamentoRepository(session)
 
     repository.add(agendamento)
     session.commit()
