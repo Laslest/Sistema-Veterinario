@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from sistema_veterinario.adapters.orm import metadata, start_mappers
+from sistema_veterinario.adapters.orm import metadata
 from sistema_veterinario.adapters.repository import SqlAlchemyAgendamentoRepository
 from sistema_veterinario.domain.model import Agendamento
 
@@ -13,7 +13,6 @@ def test_repository_salva_e_busca_agendamento():
 
     metadata.create_all(engine)
 
-    start_mappers()
 
     Session = sessionmaker(bind=engine)
     session = Session()
