@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, date, time
 from typing import Optional, List
+from enum import Enum
 
 @dataclass(frozen=True)
 class Endereco:
@@ -56,28 +57,48 @@ class Unidade:
     def __hash__(self):
         return hash(self.id_unidade)
         
-        
-@dataclass(frozen=True)
+class DiaSemana(Enum):
+    SEGUNDA = "segunda"
+    TERCA = "terca"
+    QUARTA = "quarta"
+    QUINTA = "quinta"
+    SEXTA = "sexta"
+    SABADO = "sabado"
+    DOMINGO = "domingo"
+
+@dataclass
 class Disponibilidade:
-    inicio: time
-    fim: time
+    id_disponibilidade: int
+    hora_inicio: time
+    hora_fim: time
+    dia_semana: DiaSemana
 
     def __post_init__(self):
-        if self.inicio >= self.fim:
+        if not isinstance(self.dia_semana, DiaSemana):
+            raise ValueError("O dia da semana deve ser um valor de DiaSemana")
+        if self.hora_inicio >= self.hora_fim:
             raise ValueError(
                 "O horário de início deve ser menor do que o horário final"
             )
 
 class Veterinario:
-    def __init__(self, id_veterinario, nome, crmv):
+    def __init__(self, id_veterinario, email, senha_hash, nome, crmv, especialidade):
         self.id_veterinario = id_veterinario
+        self.email = email
+        self.senha_hash = senha_hash
         self.nome = nome
         self.crmv = crmv
+        self.especialidade = especialidade
         self.disponibilidades = []
+
+        if not self.email or not self.senha_hash or not self.nome or not self.crmv or not self.especialidade:
+            raise ValueError("Todos os campos são obrigatórios.")
 
     def adicionar_disponibilidade(self, disponibilidade):
         for existente in self.disponibilidades:
-           if (disponibilidade.inicio < existente.fim and disponibilidade.fim > existente.inicio):
+           if (disponibilidade.dia_semana == existente.dia_semana 
+               and disponibilidade.hora_inicio < existente.hora_fim 
+               and disponibilidade.hora_fim > existente.hora_inicio):
                raise ValueError("Disponibilidade conflitante.")
         self.disponibilidades.append(disponibilidade)
 
@@ -257,7 +278,7 @@ class Paciente:
 class Cliente:
 
     id_cliente: int
-    nome: str
+    nome: str 
     cpf: CPF
     telefone: Telefone
     pacientes: List[Paciente] = field(default_factory=list)
