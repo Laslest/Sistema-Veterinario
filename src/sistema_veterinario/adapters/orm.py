@@ -1,7 +1,7 @@
-from sqlalchemy import Column, DateTime, Time, Integer, String, Table, ForeignKey, Date
+from sqlalchemy import Column, DateTime, Time, Integer, String, Table, ForeignKey, Date, Boolean
 from sqlalchemy.orm import registry, composite, relationship
 
-from sistema_veterinario.domain.model import Agendamento, Veterinario, Cliente, Paciente, CPF, Telefone
+from sistema_veterinario.domain.model import Agendamento, Veterinario, Cliente, Paciente, CPF, Telefone, Unidade, Endereco
 
 
 mapper_registry = registry()
@@ -62,6 +62,19 @@ pacientes = Table(
     Column("raca_id", Integer, nullable=False),
 )
 
+unidades = Table(
+    "unidades",
+    metadata,
+    Column("id_unidade", Integer, primary_key=True),
+    Column("nome", String, nullable=False),
+    Column("atende_domicilio", Boolean, nullable=False),
+    Column("rua", String, nullable=True),
+    Column("numero", String, nullable=True),
+    Column("bairro", String, nullable=True),
+    Column("cidade", String, nullable=True),
+    Column("estado", String, nullable=True),
+    Column("cep", String, nullable=True),
+)
 
 def start_mappers():
     """
@@ -93,5 +106,20 @@ def start_mappers():
             "cpf": composite(CPF, clientes.c.cpf_numero),
             "telefone": composite(Telefone, clientes.c.telefone_numero),
             "pacientes": relationship(Paciente),
+        },
+    )
+    mapper_registry.map_imperatively(
+        Unidade,
+        unidades,
+        properties={
+            "endereco": composite(
+                Endereco,
+                unidades.c.rua,
+                unidades.c.numero,
+                unidades.c.bairro,
+                unidades.c.cidade,
+                unidades.c.estado,
+                unidades.c.cep,
+            ),
         },
     )
