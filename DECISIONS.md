@@ -415,3 +415,139 @@ A inicialização dos mapeamentos ORM foi centralizada em `tests/integration/con
 #### Uso de IA generativa
 
 Utilizei IA generativa durante este checkpoint para esclarecer dúvidas conceituais sobre SQLAlchemy, Repository Pattern e pytest, interpretar mensagens e resultados de testes e revisar código que escrevi durante o desenvolvimento.
+
+
+### Davi Gesteira dos Anjos Paula
+
+#### O que implementei
+
+Neste checkpoint continuei responsável pelo agregado de Agendamento, trabalhando principalmente na persistência do agregado utilizando SQLAlchemy, na implementação do Repository Pattern e nos testes relacionados à persistência.
+
+Na camada de persistência, implementei inicialmente o mapeamento ORM de `Agendamento` no arquivo:
+
+`src/sistema_veterinario/adapters/orm.py`
+
+Foi criada a tabela `agendamentos` para representar os dados persistidos do agregado.
+
+Durante o checkpoint, o modelo de domínio de `Agendamento` também foi atualizado para ficar mais alinhado ao modelo atual do sistema.
+
+A entidade passou a possuir os seguintes atributos:
+
+- `id_agendamento`;
+- `id_paciente`;
+- `id_veterinario`;
+- `id_unidade`;
+- `id_tipo_agendamento`;
+- `data_hora`;
+- `status`.
+
+A referência direta a `id_cliente`, utilizada anteriormente, foi removida. O paciente já pertence ao agregado Cliente / Paciente, portanto o agendamento passou a manter diretamente a referência ao paciente.
+
+Também foram adicionadas as referências à unidade em que será realizado o atendimento e ao tipo de agendamento.
+
+Mantive `data_hora` como um único atributo para representar conjuntamente a data e o horário do agendamento.
+
+As regras de estado definidas anteriormente para o agregado foram mantidas:
+
+- um novo agendamento inicia com status `AGENDADO`;
+- `confirmar()` altera um agendamento de `AGENDADO` para `CONFIRMADO`;
+- `cancelar()` permite cancelar um agendamento que esteja em `AGENDADO`;
+- `concluir()` permite concluir somente um agendamento que esteja em `CONFIRMADO`;
+- a criação continua exigindo que `data_hora` esteja no futuro.
+
+Os testes unitários de Agendamento também foram atualizados para acompanhar as alterações realizadas no modelo.
+
+No arquivo:
+
+`src/sistema_veterinario/adapters/repository.py`
+
+implementei inicialmente o repositório SQLAlchemy responsável pela persistência de Agendamento.
+
+Durante a integração das implementações dos diferentes agregados, o `AbstractRepository` foi generalizado para funcionar como um contrato comum dos repositórios do sistema.
+
+Para Agendamento, a implementação concreta ficou definida como:
+
+`SqlAlchemyAgendamentoRepository`
+
+O repositório possui as operações:
+
+- `add()`: adiciona um agendamento à sessão do SQLAlchemy;
+- `get()`: recupera um agendamento por meio de seu `id_agendamento`.
+
+O controle de `commit()` não fica dentro do método `add()`, permitindo que o controle da transação permaneça externo ao repositório.
+
+Também criei o teste de integração:
+
+`tests/integration/test_repository_agendamento.py`
+
+O teste utiliza SQLite em memória e verifica a persistência e recuperação de um objeto `Agendamento` por meio do repositório SQLAlchemy.
+
+O teste verifica a recuperação dos seguintes dados:
+
+- `id_agendamento`;
+- `id_paciente`;
+- `id_veterinario`;
+- `id_unidade`;
+- `id_tipo_agendamento`;
+- `data_hora`;
+- `status`.
+
+Após a generalização do `AbstractRepository` e a alteração do nome da implementação concreta para `SqlAlchemyAgendamentoRepository`, o teste de integração também foi atualizado para utilizar a nova implementação.
+
+Também implementei:
+
+`FakeAgendamentoRepository`
+
+no arquivo:
+
+`src/sistema_veterinario/adapters/repository.py`
+
+O repositório fake mantém os agendamentos em memória utilizando um dicionário, usando o `id_agendamento` como chave.
+
+Foi criado o arquivo:
+
+`tests/unit/test_fake_repository_agendamento.py`
+
+Os testes verificam:
+
+- adição de um agendamento ao `FakeAgendamentoRepository`;
+- recuperação de um agendamento pelo seu identificador;
+- preservação dos dados do objeto recuperado;
+- retorno de `None` ao buscar um identificador inexistente.
+
+Também atualizei o workflow de integração contínua em:
+
+`.github/workflows/ci.yml`
+
+para instalar o SQLAlchemy e executar todos os testes presentes no diretório `tests`, permitindo que os testes de integração também sejam executados pelo GitHub Actions.
+
+#### Commits
+
+Commits realizados neste checkpoint:
+
+- `60fc017` - `feat: adiciona mapeamento ORM de agendamento`
+- `9a63294` - `ci: prepara pipeline para testes de integracao`
+- `72ac349` - `feat: adiciona repositorio SQLAlchemy de agendamento`
+- `9fdc4d5` - `refactor: alinha agendamento ao modelo de dominio`
+- `0c5187a` - `test: adiciona teste de integracao do repositorio de agendamento`
+- `b70a9ce` - `refactor: generaliza contrato de repositorio`
+- `5e3974b` - `refactor: generaliza contrato de repositorio`
+- `9a6c4de` - `test: adiciona fake repository de agendamento`
+
+#### Decisões de projeto
+
+Durante este checkpoint, decidi remover a referência direta a `id_cliente` da entidade `Agendamento`. Como o paciente já está associado ao cliente dentro do agregado Cliente / Paciente, manter simultaneamente `id_cliente` e `id_paciente` no Agendamento criaria uma informação redundante. O Agendamento passou, portanto, a referenciar diretamente o paciente.
+
+Também foram adicionadas as referências `id_unidade` e `id_tipo_agendamento`, permitindo representar no agregado onde o atendimento será realizado e qual é o tipo de agendamento.
+
+Mantive `data_hora` como um único atributo em vez de separar data e horário dentro da entidade. Essa representação permite realizar diretamente a validação que impede a criação de agendamentos em momentos passados e mantém a informação temporal do agendamento concentrada em um único valor.
+
+Na camada de persistência, decidi utilizar um `AbstractRepository` genérico como contrato comum para os diferentes agregados. Dessa forma, operações básicas como `add()` e `get()` possuem uma abstração comum, enquanto cada agregado mantém uma implementação concreta específica.
+
+Para Agendamento, foi utilizada a implementação `SqlAlchemyAgendamentoRepository`, que conhece a entidade `Agendamento` e utiliza a sessão do SQLAlchemy para realizar sua persistência.
+
+Também optei por não executar `commit()` dentro do método `add()` do repositório. Dessa maneira, o repositório fica responsável por adicionar e recuperar entidades, enquanto o controle da transação permanece separado dessa responsabilidade.
+
+Para os testes que não precisam utilizar um banco de dados, implementei `FakeAgendamentoRepository`. A implementação utiliza um dicionário em memória indexado pelo `id_agendamento`, mantendo as operações básicas compatíveis com o contrato utilizado pelo repositório real.
+
+No teste de integração, optei por utilizar SQLite em memória. Isso permite exercitar o mapeamento ORM e o repositório SQLAlchemy utilizando um banco real durante o teste, sem criar um arquivo de banco permanente no projeto.
