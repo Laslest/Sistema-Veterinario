@@ -37,4 +37,16 @@ class SqlAlchemyClienteRepository(AbstractRepository):
         self.session.add(cliente)
 
     def get(self, id_cliente: int):
-        return self.session.get(Cliente, id_cliente)    
+        return self.session.get(Cliente, id_cliente)
+
+
+class FakeAgendamentoRepository(AbstractRepository):
+
+    def __init__(self):
+        self.agendamentos = {}
+
+    def add(self, agendamento: Agendamento):
+        self.agendamentos[agendamento.id_agendamento] = agendamento
+
+    def get(self, id_agendamento: int):
+        return self.agendamentos.get(id_agendamento)
