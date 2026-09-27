@@ -8,15 +8,15 @@ from sistema_veterinario.domain.model import Agendamento
 class AbstractRepository(ABC):
 
     @abstractmethod
-    def add(self, agendamento: Agendamento):
+    def add(self, entidade):
         raise NotImplementedError
 
     @abstractmethod
-    def get(self, id_agendamento: int):
+    def get(self, id_entidade):
         raise NotImplementedError
 
 
-class SqlAlchemyRepository(AbstractRepository):
+class SqlAlchemyAgendamentoRepository(AbstractRepository):
 
     def __init__(self, session: Session):
         self.session = session
