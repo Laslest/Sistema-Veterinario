@@ -74,3 +74,15 @@ class FakeVeterinarioRepository(AbstractRepository):
 
     def get(self, id_veterinario: int):
         return self.veterinarios.get(id_veterinario)
+
+
+class FakeClienteRepository(AbstractRepository):
+
+    def __init__(self):
+        self.clientes = {}
+
+    def add(self, cliente: Cliente):
+        self.clientes[cliente.id_cliente] = cliente
+
+    def get(self, id_cliente: int):
+        return self.clientes.get(id_cliente)
