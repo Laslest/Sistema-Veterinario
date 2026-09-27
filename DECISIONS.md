@@ -274,3 +274,144 @@ Decidi representar `CPF` e `Telefone` como **Objetos de Valor**, pois não possu
 Decidi representar `Paciente`, `Especie` e `Raca` como **Entidades**, pois possuem identificadores próprios. `Especie` e `Raca` são entidades de domínio relacionadas ao agregado Cliente / Paciente e utilizadas na caracterização dos pacientes. A `Raca` possui uma referência à `Especie`, enquanto o `Paciente` mantém a referência à `Raca` por meio de seu identificador.
 
 Inicialmente, implementei `Email` como um **Objeto de Valor**, porém, após revisar o modelo conceitual, decidi removê-lo da implementação por não fazer parte dos atributos definidos para o agregado Cliente / Paciente.
+
+## Fase 1 - Checkpoint 2
+
+### Carlos Victor dos Santos Dantas
+
+#### O que implementei
+
+Neste checkpoint continuei responsável pelo agregado de Veterinário, trabalhando principalmente na persistência de `Veterinario` e `Disponibilidade` utilizando SQLAlchemy e SQLite.
+
+Durante o desenvolvimento, o modelo de domínio também foi atualizado para refletir melhor os requisitos atuais do sistema.
+
+A entidade `Veterinario` passou a possuir os seguintes atributos:
+
+- `id_veterinario`;
+- `email`;
+- `senha_hash`;
+- `nome`;
+- `crmv`;
+- `especialidade`;
+- coleção de `disponibilidades`.
+
+A `Disponibilidade`, que anteriormente havia sido tratada como um objeto de valor, passou a ser representada como uma entidade com identificador próprio.
+
+Ela possui os seguintes atributos:
+
+- `id_disponibilidade`;
+- `dia_semana`;
+- `hora_inicio`;
+- `hora_fim`.
+
+Para representar os dias da semana, foi criado o `Enum` `DiaSemana`, evitando o uso de valores arbitrários para esse atributo.
+
+Também foi atualizada a regra de conflito entre disponibilidades. Duas disponibilidades são consideradas conflitantes apenas quando pertencem ao mesmo dia da semana e possuem sobreposição de horários. Disponibilidades consecutivas continuam sendo permitidas.
+
+Foram atualizados os testes unitários nos arquivos:
+
+`tests/unit/test_disponibilidade.py`
+
+`tests/unit/test_veterinario.py`
+
+Os testes verificam, entre outros comportamentos:
+
+- criação de disponibilidades válidas;
+- rejeição de horários inválidos;
+- validação do dia da semana;
+- conflito de disponibilidades no mesmo dia;
+- aceitação de horários consecutivos;
+- aceitação de horários sobrepostos em dias diferentes;
+- obrigatoriedade dos dados de `Veterinario`.
+
+Na camada de persistência, atualizei o mapeamento ORM no arquivo:
+
+`src/sistema_veterinario/adapters/orm.py`
+
+A tabela de veterinários foi atualizada para armazenar os novos atributos da entidade.
+
+A tabela de disponibilidades passou a utilizar `id_disponibilidade` como chave primária e possui uma chave estrangeira `id_veterinario`, relacionando cada disponibilidade ao veterinário correspondente.
+
+Também foi realizado o mapeamento da entidade `Disponibilidade` e configurado o relacionamento entre `Veterinario` e sua coleção de disponibilidades.
+
+O atributo `dia_semana` foi mapeado utilizando `Enum(DiaSemana)`, permitindo que o domínio continue trabalhando com o Enum mesmo após a persistência no banco de dados.
+
+No arquivo:
+
+`src/sistema_veterinario/adapters/repository.py`
+
+implementei o `SqlAlchemyVeterinarioRepository`, seguindo a abstração definida por `AbstractRepository`.
+
+Esse repositório possui as operações:
+
+- `add()`: adiciona um veterinário à sessão do SQLAlchemy;
+- `get()`: recupera um veterinário por meio do seu `id_veterinario`.
+
+Também implementei o `FakeVeterinarioRepository`, que mantém os veterinários em memória utilizando um dicionário. Ele possui a mesma interface básica do repositório real, permitindo adicionar e buscar veterinários sem utilizar banco de dados.
+
+Foi criado o teste de integração:
+
+`tests/integration/test_repository_veterinario.py`
+
+O teste utiliza um banco SQLite em memória e verifica:
+
+- persistência de um `Veterinario`;
+- recuperação do veterinário pelo identificador;
+- persistência dos atributos `email`, `senha_hash`, `nome`, `crmv` e `especialidade`;
+- persistência da coleção de disponibilidades;
+- recuperação de `id_disponibilidade`;
+- recuperação correta de `hora_inicio` e `hora_fim`;
+- recuperação correta de `DiaSemana`.
+
+No teste de integração foi utilizado `session.expunge_all()` antes da busca, garantindo que o objeto recuperado seja novamente carregado a partir do banco de dados e não apenas reutilizado da sessão.
+
+Também foi criado:
+
+`tests/unit/test_fake_repository_veterinario.py`
+
+Os testes verificam:
+
+- adição e recuperação de um veterinário no `FakeVeterinarioRepository`;
+- retorno de `None` ao buscar um identificador inexistente.
+
+Além disso, criei:
+
+`tests/integration/conftest.py`
+
+para centralizar a inicialização dos mapeamentos ORM durante os testes de integração. Com isso, o `start_mappers()` é executado uma única vez durante a sessão de testes, evitando inicializações repetidas em cada arquivo.
+
+O teste de integração de Agendamento também foi ajustado para utilizar essa inicialização centralizada.
+
+Ao final das alterações, os testes unitários e os testes de integração permaneceram passando.
+
+#### Commits
+
+Commits realizados neste checkpoint:
+
+- `5f71a2a` - `feat: adiciona mapeamento ORM de veterinario`
+- `25adb44` - `refactor: remove import desnecessario de disponibilidade`
+- `df3242c` - `feat: atualiza modelo de veterinario e disponibilidade`
+- `93dd80e` - `refactor: adapta mapeamento de veterinario e disponibilidade`
+- `37678b3` - `feat: adiciona repositorio SQLAlchemy de veterinario`
+- `a62f509` - `test: centraliza inicializacao dos mappers nos testes de integracao`
+- `8b356d8` - `test: adiciona fake repository de veterinario`
+
+#### Decisões de projeto
+
+Durante este checkpoint, decidi alterar `Disponibilidade` de objeto de valor para entidade, pois ela passou a possuir identidade própria por meio do atributo `id_disponibilidade`. Essa mudança também tornou mais direta a sua representação e persistência no banco de dados.
+
+Mantive `Veterinario` como responsável por controlar sua coleção de disponibilidades e pela regra que impede conflitos de horário. Dessa forma, a regra continua centralizada no agregado em vez de ser transferida para a camada de persistência.
+
+Também decidi representar o dia da semana utilizando o `Enum` `DiaSemana`. Essa escolha restringe os valores possíveis aos dias definidos pelo domínio e evita o uso de textos arbitrários para representar um dia da semana.
+
+No ORM, foi configurado um relacionamento entre `Veterinario` e `Disponibilidade`. Com isso, as disponibilidades associadas ao veterinário podem ser persistidas juntamente com ele, mantendo a relação existente no modelo de domínio.
+
+Foi utilizado `cascade="all, delete-orphan"` no relacionamento, pois uma disponibilidade pertence ao veterinário ao qual está associada. Assim, a persistência acompanha o ciclo de vida dessa associação.
+
+Também optei por implementar um `FakeVeterinarioRepository` com a mesma interface básica do repositório SQLAlchemy. O objetivo é permitir que testes que não precisam acessar o banco possam trabalhar com uma implementação simples em memória, mantendo o código desacoplado da infraestrutura.
+
+A inicialização dos mapeamentos ORM foi centralizada em `tests/integration/conftest.py` para evitar que cada teste de integração tente executar os mesmos mapeamentos novamente.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa durante este checkpoint para esclarecer dúvidas conceituais sobre SQLAlchemy, Repository Pattern e pytest, interpretar mensagens e resultados de testes e revisar código que escrevi durante o desenvolvimento.
