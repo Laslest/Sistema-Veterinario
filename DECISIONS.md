@@ -562,60 +562,55 @@ Implementei o mapeamento ORM da entidade `Unidade` no arquivo:
 
 `src/sistema_veterinario/adapters/orm.py`
 
-Foi criada a tabela `unidades`, contendo os seguintes campos:
+Foi criada a tabela `unidades`, contendo os campos `id_unidade`, `nome`, `atende_domicilio` e os campos relacionados ao endereço.
 
-* `id_unidade`;
-* `nome`;
-* `atende_domicilio`;
-* `rua`;
-* `numero`;
-* `bairro`;
-* `cidade`;
-* `estado`;
-* `cep`.
+O objeto de valor `Endereco` foi mapeado utilizando o recurso `composite` do SQLAlchemy, relacionando `rua`, `numero`, `bairro`, `cidade`, `estado` e `cep` às respectivas colunas da tabela `unidades`.
 
-O objeto de valor `Endereco` foi mapeado utilizando o recurso `composite` do SQLAlchemy, relacionando seus atributos às respectivas colunas da tabela `unidades`.
-
-Também implementei o repositório:
-
-`SqlAlchemyUnidadeRepository`
-
-no arquivo:
+Também implementei o `SqlAlchemyUnidadeRepository` no arquivo:
 
 `src/sistema_veterinario/adapters/repository.py`
 
-O repositório possui as operações necessárias para adicionar uma `Unidade` e buscar uma unidade pelo seu identificador.
+O repositório possui as operações `add()` e `get()` para persistir e recuperar uma `Unidade`.
 
-Também criei um teste de integração no arquivo:
+Seguindo o mesmo padrão dos demais agregados, também foi implementado o `FakeUnidadeRepository`, que mantém as unidades em memória utilizando um dicionário.
+
+Foram criados os testes:
 
 `tests/integration/test_repository_unidade.py`
 
-O teste utiliza SQLite em memória para verificar a persistência de uma unidade contendo endereço e sua posterior recuperação por meio do repositório.
+`tests/unit/test_fake_repository_unidade.py`
+
+O teste de integração verifica a persistência e recuperação de uma unidade com endereço utilizando SQLite em memória. O teste do repositório fake verifica a adição, recuperação e busca de uma unidade inexistente.
 
 #### Commits
 
 Commits realizados neste checkpoint:
 
-* `91cb828` - `feat: adiciona mapeamento ORM de unidade/endereco`
-* `6636ada` - `feat: adiciona repositorio de unidade e teste de integracao`
+- `91cb828` - `feat: adiciona mapeamento ORM de unidade/endereco`
+- `6636ada` - `feat: adiciona repositorio de unidade e teste de integracao`
+- `d1ab2ae` - `feat: adiciona testes de unidade`
+
+Após a implementação do Fake Repository e dos testes adicionais, novos hashes deverão ser colocados aqui conforme os commits realizados.
 
 #### Decisões de projeto
 
-Decidi manter `Endereco` como um **Objeto de Valor** e utilizar o recurso `composite` do SQLAlchemy para realizar seu mapeamento dentro da tabela `unidades`.
+Decidi manter `Endereco` como um **Objeto de Valor** e utilizar `composite` do SQLAlchemy para realizar seu mapeamento dentro da tabela `unidades`.
 
-A ordem dos campos utilizada no `composite` segue a definição do objeto `Endereco`: `rua`, `numero`, `bairro`, `cidade`, `estado` e `cep`.
+A ordem dos campos do `composite` segue exatamente a definição do objeto `Endereco`: `rua`, `numero`, `bairro`, `cidade`, `estado` e `cep`.
 
-Também defini que os campos relacionados ao endereço podem ser nulos na tabela `unidades`, permitindo representar uma unidade que realiza atendimento a domicílio sem necessariamente possuir um endereço físico.
+Os campos relacionados ao endereço são `nullable=True` na tabela `unidades`, permitindo representar uma unidade que realiza atendimento a domicílio sem endereço físico no banco.
 
-Para manter a separação entre domínio e infraestrutura, foi criado o `SqlAlchemyUnidadeRepository`, responsável pelas operações de persistência e recuperação da entidade `Unidade`.
+Também foi adotado o `SqlAlchemyUnidadeRepository` para separar as operações de persistência da lógica de domínio.
 
-A persistência foi acompanhada por um teste de integração utilizando SQLite em memória, verificando se uma unidade com endereço é corretamente salva e posteriormente recuperada pelo repositório.
+Para testes que não precisam de banco de dados, foi adotado o `FakeUnidadeRepository`, seguindo o mesmo padrão dos repositórios fake já existentes no projeto.
+
+O teste de integração utiliza SQLite em memória para verificar o funcionamento real do mapeamento ORM e do repositório, enquanto o teste unitário do fake verifica o comportamento do repositório em memória.
 
 #### Uso de IA generativa
 
-Utilizei IA generativa durante este checkpoint para esclarecer dúvidas conceituais sobre SQLAlchemy, `composite`, Repository Pattern e testes de integração, além de auxiliar na interpretação de erros, revisão da implementação e organização dos testes.
+Utilizei IA generativa durante este checkpoint como apoio para esclarecer dúvidas sobre SQLAlchemy, `composite`, Repository Pattern e testes de integração e unitários. Também utilizei a ferramenta para auxiliar na interpretação de erros, revisão da implementação e organização dos testes.
 
-A utilização da IA ocorreu como apoio ao desenvolvimento, mantendo a análise, validação e integração das alterações no projeto sob minha responsabilidade.
+A IA foi utilizada como apoio ao desenvolvimento, enquanto a análise, validação e integração das alterações no projeto permaneceram sob minha responsabilidade.
 
 ### David Pereira Ramos
 
