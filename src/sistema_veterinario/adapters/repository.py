@@ -97,3 +97,14 @@ class FakeClienteRepository(AbstractRepository):
 
     def get(self, id_cliente: int):
         return self.clientes.get(id_cliente)
+
+class FakeUnidadeRepository(AbstractRepository):
+
+    def __init__(self):
+        self.unidades = {}
+
+    def add(self, unidade: Unidade):
+        self.unidades[unidade.id_unidade] = unidade
+
+    def get(self, id_unidade: int):
+        return self.unidades.get(id_unidade)    
