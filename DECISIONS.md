@@ -552,6 +552,70 @@ Para os testes que não precisam utilizar um banco de dados, implementei `FakeAg
 
 No teste de integração, optei por utilizar SQLite em memória. Isso permite exercitar o mapeamento ORM e o repositório SQLAlchemy utilizando um banco real durante o teste, sem criar um arquivo de banco permanente no projeto.
 
+### Cauã Raphael Santos de Paula
+
+#### O que implementei
+
+Neste checkpoint continuei responsável pelo agregado de **Unidade / Local de Atendimento**, trabalhando principalmente na persistência da entidade `Unidade` e do objeto de valor `Endereco` utilizando SQLAlchemy.
+
+Implementei o mapeamento ORM da entidade `Unidade` no arquivo:
+
+`src/sistema_veterinario/adapters/orm.py`
+
+Foi criada a tabela `unidades`, contendo os seguintes campos:
+
+* `id_unidade`;
+* `nome`;
+* `atende_domicilio`;
+* `rua`;
+* `numero`;
+* `bairro`;
+* `cidade`;
+* `estado`;
+* `cep`.
+
+O objeto de valor `Endereco` foi mapeado utilizando o recurso `composite` do SQLAlchemy, relacionando seus atributos às respectivas colunas da tabela `unidades`.
+
+Também implementei o repositório:
+
+`SqlAlchemyUnidadeRepository`
+
+no arquivo:
+
+`src/sistema_veterinario/adapters/repository.py`
+
+O repositório possui as operações necessárias para adicionar uma `Unidade` e buscar uma unidade pelo seu identificador.
+
+Também criei um teste de integração no arquivo:
+
+`tests/integration/test_repository_unidade.py`
+
+O teste utiliza SQLite em memória para verificar a persistência de uma unidade contendo endereço e sua posterior recuperação por meio do repositório.
+
+#### Commits
+
+Commits realizados neste checkpoint:
+
+* `91cb828` - `feat: adiciona mapeamento ORM de unidade/endereco`
+* `6636ada` - `feat: adiciona repositorio de unidade e teste de integracao`
+
+#### Decisões de projeto
+
+Decidi manter `Endereco` como um **Objeto de Valor** e utilizar o recurso `composite` do SQLAlchemy para realizar seu mapeamento dentro da tabela `unidades`.
+
+A ordem dos campos utilizada no `composite` segue a definição do objeto `Endereco`: `rua`, `numero`, `bairro`, `cidade`, `estado` e `cep`.
+
+Também defini que os campos relacionados ao endereço podem ser nulos na tabela `unidades`, permitindo representar uma unidade que realiza atendimento a domicílio sem necessariamente possuir um endereço físico.
+
+Para manter a separação entre domínio e infraestrutura, foi criado o `SqlAlchemyUnidadeRepository`, responsável pelas operações de persistência e recuperação da entidade `Unidade`.
+
+A persistência foi acompanhada por um teste de integração utilizando SQLite em memória, verificando se uma unidade com endereço é corretamente salva e posteriormente recuperada pelo repositório.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa durante este checkpoint para esclarecer dúvidas conceituais sobre SQLAlchemy, `composite`, Repository Pattern e testes de integração, além de auxiliar na interpretação de erros, revisão da implementação e organização dos testes.
+
+A utilização da IA ocorreu como apoio ao desenvolvimento, mantendo a análise, validação e integração das alterações no projeto sob minha responsabilidade.
 
 ### David Pereira Ramos
 
