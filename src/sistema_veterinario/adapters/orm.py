@@ -1,7 +1,30 @@
-from sqlalchemy import Column, DateTime, Time, Integer, String, Table, ForeignKey, Date, Boolean, Enum
-from sqlalchemy.orm import registry, composite, relationship
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    Time,
+    inspect,
+)
+from sqlalchemy.orm import composite, registry, relationship
 
-from sistema_veterinario.domain.model import Agendamento, Veterinario, Cliente, Paciente, CPF, Telefone, Unidade, Endereco, Disponibilidade, DiaSemana
+from sistema_veterinario.domain.model import (
+    Agendamento,
+    Cliente,
+    CPF,
+    DiaSemana,
+    Disponibilidade,
+    Endereco,
+    Paciente,
+    Telefone,
+    Unidade,
+    Veterinario,
+)
 
 
 mapper_registry = registry()
@@ -16,7 +39,7 @@ veterinarios = Table(
     Column("senha_hash", String, nullable=False),
     Column("nome", String, nullable=False),
     Column("crmv", String, nullable=False),
-    Column("especialidade", String, nullable=False)
+    Column("especialidade", String, nullable=False),
 )
 
 
@@ -48,6 +71,7 @@ agendamentos = Table(
     Column("status", String, nullable=False),
 )
 
+
 clientes = Table(
     "clientes",
     metadata,
@@ -56,6 +80,7 @@ clientes = Table(
     Column("cpf_numero", String(11), nullable=False),
     Column("telefone_numero", String(11), nullable=False),
 )
+
 
 pacientes = Table(
     "pacientes",
@@ -66,6 +91,7 @@ pacientes = Table(
     Column("data_nascimento", Date, nullable=False),
     Column("raca_id", Integer, nullable=False),
 )
+
 
 unidades = Table(
     "unidades",
@@ -81,57 +107,72 @@ unidades = Table(
     Column("cep", String, nullable=True),
 )
 
+
 def start_mappers():
     """
     Inicializa o mapeamento ORM das entidades do domínio.
     """
 
-    mapper_registry.map_imperatively(
-        Disponibilidade,
-        disponibilidades,
-    )
-    mapper_registry.map_imperatively(
-        Veterinario,
-        veterinarios,
-        properties={
-            "disponibilidades": relationship(Disponibilidade, cascade="all, delete-orphan"),
-        },
-    )
+    if inspect(Disponibilidade, raiseerr=False) is None:
+        mapper_registry.map_imperatively(
+            Disponibilidade,
+            disponibilidades,
+        )
 
-    mapper_registry.map_imperatively(
-        Agendamento,
-        agendamentos,
-    )
+    if inspect(Veterinario, raiseerr=False) is None:
+        mapper_registry.map_imperatively(
+            Veterinario,
+            veterinarios,
+            properties={
+                "disponibilidades": relationship(
+                    Disponibilidade,
+                    cascade="all, delete-orphan",
+                ),
+            },
+        )
 
-    mapper_registry.map_imperatively(
-        Paciente,
-        pacientes,
-        properties={
-            "_id_cliente": pacientes.c.id_cliente,
-        },
-    )
+    if inspect(Agendamento, raiseerr=False) is None:
+        mapper_registry.map_imperatively(
+            Agendamento,
+            agendamentos,
+        )
 
-    mapper_registry.map_imperatively(
-        Cliente,
-        clientes,
-        properties={
-            "cpf": composite(CPF, clientes.c.cpf_numero),
-            "telefone": composite(Telefone, clientes.c.telefone_numero),
-            "pacientes": relationship(Paciente),
-        },
-    )
-    mapper_registry.map_imperatively(
-        Unidade,
-        unidades,
-        properties={
-            "endereco": composite(
-                Endereco,
-                unidades.c.rua,
-                unidades.c.numero,
-                unidades.c.bairro,
-                unidades.c.cidade,
-                unidades.c.estado,
-                unidades.c.cep,
-            ),
-        },
-    )
+    if inspect(Paciente, raiseerr=False) is None:
+        mapper_registry.map_imperatively(
+            Paciente,
+            pacientes,
+            properties={
+                "_id_cliente": pacientes.c.id_cliente,
+            },
+        )
+
+    if inspect(Cliente, raiseerr=False) is None:
+        mapper_registry.map_imperatively(
+            Cliente,
+            clientes,
+            properties={
+                "cpf": composite(CPF, clientes.c.cpf_numero),
+                "telefone": composite(
+                    Telefone,
+                    clientes.c.telefone_numero,
+                ),
+                "pacientes": relationship(Paciente),
+            },
+        )
+
+    if inspect(Unidade, raiseerr=False) is None:
+        mapper_registry.map_imperatively(
+            Unidade,
+            unidades,
+            properties={
+                "endereco": composite(
+                    Endereco,
+                    unidades.c.rua,
+                    unidades.c.numero,
+                    unidades.c.bairro,
+                    unidades.c.cidade,
+                    unidades.c.estado,
+                    unidades.c.cep,
+                ),
+            },
+        )
