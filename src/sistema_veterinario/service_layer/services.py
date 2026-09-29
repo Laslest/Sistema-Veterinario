@@ -74,12 +74,3 @@ def adicionar_paciente(repository, id_cliente, id_paciente, nome, data_nasciment
     cliente.adicionar_paciente(paciente)
 
     return paciente
-
-
-def buscar_paciente(repository, id_cliente, id_paciente):
-    cliente = repository.get(id_cliente)
-
-    if cliente is None:
-        raise ValueError("Cliente não encontrado")
-
-    return cliente.buscar_paciente(id_paciente)

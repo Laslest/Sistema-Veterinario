@@ -1,8 +1,8 @@
 from datetime import date
 
 from sistema_veterinario.adapters.repository import FakeClienteRepository
-from sistema_veterinario.domain.model import Cliente, CPF, Paciente, Telefone
-from sistema_veterinario.service_layer.services import adicionar_paciente, buscar_cliente, buscar_paciente, cadastrar_cliente
+from sistema_veterinario.domain.model import Cliente, CPF, Telefone
+from sistema_veterinario.service_layer.services import adicionar_paciente, buscar_cliente, cadastrar_cliente
 
 
 def criar_cliente_valido(id_cliente: int = 1) -> Cliente:
@@ -76,29 +76,3 @@ def test_adicionar_paciente():
     assert paciente.nome == "Rex"
     assert paciente.data_nascimento == date(2020, 5, 10)
     assert paciente.raca_id == 5
-
-
-def test_buscar_paciente():
-    # Arrange
-    repository = FakeClienteRepository()
-    cliente = criar_cliente_valido(id_cliente=1)
-
-    paciente = Paciente(
-        id_paciente=10,
-        nome="Rex",
-        data_nascimento=date(2020, 5, 10),
-        raca_id=5,
-    )
-
-    cliente.adicionar_paciente(paciente)
-    repository.add(cliente)
-
-    
-    resultado = buscar_paciente(repository, 1, 10)
-
-    
-    assert resultado is not None
-    assert resultado.id_paciente == 10
-    assert resultado.nome == "Rex"
-    assert resultado.data_nascimento == date(2020, 5, 10)
-    assert resultado.raca_id == 5
