@@ -751,3 +751,88 @@ Também mantive o controle de `commit()` fora do método `add()`. Dessa forma, o
 Para os testes que não precisam acessar o banco de dados, implementei o `FakeClienteRepository`. A implementação utiliza um dicionário em memória indexado pelo `id_cliente` e mantém as mesmas operações básicas utilizadas pelo repositório SQLAlchemy.
 
 Nos testes de integração, utilizei SQLite em memória para exercitar o mapeamento ORM e o repositório utilizando um banco real durante os testes, sem criar arquivos permanentes no projeto. Também utilizei `session.expunge_all()` antes da recuperação dos dados para garantir que os objetos fossem carregados novamente a partir do banco de dados.
+
+## Fase 1 - Entrega
+
+### Davi Gesteira dos Anjos Paula
+
+#### O que implementei
+
+Na entrega final da Fase 1, continuei responsável pelo agregado de Agendamento, implementando a camada de serviço, a API Flask e os testes E2E relacionados ao agregado.
+
+No arquivo:
+
+`src/sistema_veterinario/service_layer/services.py`
+
+implementei os casos de uso:
+
+- `criar_agendamento()`: cria um objeto `Agendamento` com os dados recebidos e realiza sua inclusão através do repositório;
+- `cancelar_agendamento()`: busca um agendamento pelo identificador, verifica sua existência e utiliza a operação `cancelar()` da própria entidade.
+
+Também criei os testes dos serviços em:
+
+`tests/unit/test_services_agendamento.py`
+
+Os testes verificam a criação de um agendamento através da camada de serviço e o cancelamento de um agendamento, utilizando o `FakeAgendamentoRepository`.
+
+Na camada de entrada da aplicação, implementei em:
+
+`src/sistema_veterinario/entrypoints/flask_app.py`
+
+os endpoints:
+
+- `POST /agendamentos`, responsável pela criação de um novo agendamento;
+- `POST /agendamentos/<id_agendamento>/cancelar`, responsável pelo cancelamento de um agendamento existente.
+
+O endpoint de criação recebe os dados em JSON, converte `data_hora` para `datetime`, utiliza o `SqlAlchemyAgendamentoRepository` e chama o caso de uso `criar_agendamento()`.
+
+O endpoint de cancelamento utiliza o repositório para recuperar o agendamento e chama o caso de uso `cancelar_agendamento()`.
+
+Também foram adicionados tratamentos para dados inválidos, agendamento inexistente e conflitos de persistência.
+
+A criação da aplicação Flask foi organizada através de `create_app()`, permitindo informar uma URL de banco diferente durante os testes.
+
+Criei os testes E2E no arquivo:
+
+`tests/e2e/test_agendamento_api.py`
+
+Os testes verificam:
+
+- criação de um agendamento através da API;
+- retorno HTTP `201` na criação;
+- dados retornados pela API;
+- cancelamento de um agendamento através da API;
+- retorno HTTP `200` no cancelamento;
+- alteração do status para `CANCELADO`.
+
+Nos testes E2E utilizei SQLite em memória, evitando dependência dos dados existentes no banco utilizado pela aplicação.
+
+Também ajustei:
+
+`src/sistema_veterinario/adapters/orm.py`
+
+para impedir que `start_mappers()` tente mapear novamente classes que já possuem mapeamento SQLAlchemy. Esse ajuste permitiu executar os testes E2E e os testes de integração na mesma execução sem ocorrer erro de mapeamento duplicado.
+
+Além disso, atualizei a configuração da integração contínua e as dependências necessárias para que a aplicação Flask e todos os testes possam ser executados no GitHub Actions.
+
+Ao final das alterações, a suíte completa de testes unitários, de integração e E2E permaneceu passando.
+
+#### Commits
+
+Commits realizados nesta entrega:
+
+- `b8749b6` - `feat: adiciona casos de uso de agendamento`
+- `9e11a44` - `ci: configura dependências da aplicação`
+- `4e4c080` - `fix: evita mapeamento ORM duplicado`
+- `59789a8` - `feat: adiciona API de agendamento`
+- `38f857c` - `test: adiciona testes e2e de agendamento`
+
+#### Decisões de projeto
+
+Decidi manter as regras de negócio de Agendamento fora da API Flask. Os endpoints ficam responsáveis por receber e converter os dados da requisição e chamar os casos de uso da camada de serviço, enquanto as regras de estado continuam concentradas na entidade de domínio.
+
+A camada de serviço recebe o repositório como dependência. Dessa forma, os casos de uso não ficam diretamente acoplados ao SQLAlchemy e podem utilizar implementações diferentes de repositório durante os testes.
+
+Para os testes E2E, decidi utilizar SQLite em memória em vez do arquivo `sistema_veterinario.db`. Isso permite que os testes sejam executados de forma isolada, sem depender de registros deixados por execuções anteriores.
+
+Também ajustei a inicialização dos mapeamentos ORM para que classes já mapeadas não sejam mapeadas novamente. Esse ajuste foi necessário porque a aplicação Flask e os testes de integração podem inicializar os mapeamentos durante uma mesma execução do pytest.
