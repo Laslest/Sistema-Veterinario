@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 from flask import Flask, jsonify, request
 from sqlalchemy import create_engine
@@ -6,9 +6,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from sistema_veterinario.domain.model import Endereco
+from sistema_veterinario.domain.model import Endereco, DiaSemana
 from sistema_veterinario.adapters.orm import metadata, start_mappers
-from sistema_veterinario.adapters.repository import SqlAlchemyAgendamentoRepository, SqlAlchemyClienteRepository, SqlAlchemyUnidadeRepository
+from sistema_veterinario.adapters.repository import SqlAlchemyAgendamentoRepository, SqlAlchemyClienteRepository, SqlAlchemyUnidadeRepository, SqlAlchemyVeterinarioRepository
 from sistema_veterinario.service_layer import services
 
 
@@ -435,6 +435,174 @@ def create_app(database_url="sqlite:///sistema_veterinario.db"):
 
         finally:
             session.close()
+
+    @app.route("/veterinarios", methods=["POST"])
+    def cadastrar_veterinario_endpoint():
+        session = Session()
+
+        try:
+            dados = request.get_json(silent=True)
+
+            if dados is None:
+                raise ValueError("JSON inválido")
+
+            repository = SqlAlchemyVeterinarioRepository(session)
+
+            veterinario = services.cadastrar_veterinario(
+                repository=repository,
+                id_veterinario=dados["id_veterinario"],
+                email=dados["email"],
+                senha_hash=dados["senha_hash"],
+                nome=dados["nome"],
+                crmv=dados["crmv"],
+                especialidade=dados["especialidade"],
+            )
+
+            session.commit()
+
+            return jsonify(
+                {
+                    "id_veterinario": veterinario.id_veterinario,
+                    "email": veterinario.email,
+                    "nome": veterinario.nome,
+                    "crmv": veterinario.crmv,
+                    "especialidade": veterinario.especialidade,
+                }
+            ), 201
+
+        except (ValueError, KeyError, TypeError) as erro:
+            session.rollback()
+
+            return jsonify(
+                {
+                    "erro": str(erro),
+                }
+            ), 400
+
+        except IntegrityError:
+            session.rollback()
+
+            return jsonify(
+                {
+                    "erro": "Veterinário já cadastrado ou dados inválidos",
+                }
+            ), 409
+
+        finally:
+            session.close()
+
+    @app.route("/veterinarios/<int:id_veterinario>", methods=["GET"])
+    def buscar_veterinario_endpoint(id_veterinario):
+        session = Session()
+
+        try:
+            repository = SqlAlchemyVeterinarioRepository(session)
+
+            veterinario = services.buscar_veterinario(
+                repository=repository,
+                id_veterinario=id_veterinario,
+            )
+
+            return jsonify(
+                {
+                    "id_veterinario": veterinario.id_veterinario,
+                    "email": veterinario.email,
+                    "nome": veterinario.nome,
+                    "crmv": veterinario.crmv,
+                    "especialidade": veterinario.especialidade,
+        "disponibilidades": [
+                        {
+                        "id_disponibilidade": disponibilidade.id_disponibilidade,
+                        "dia_semana": disponibilidade.dia_semana.value,
+                        "hora_inicio": disponibilidade.hora_inicio.isoformat(),
+                        "hora_fim": disponibilidade.hora_fim.isoformat(),
+                        }
+                        for disponibilidade in veterinario.disponibilidades
+                    ],
+                }
+            ), 200
+
+        except ValueError as erro:
+            if str(erro) == "Veterinário não encontrado":
+                return jsonify(
+                    {
+                        "erro": str(erro),
+                    }
+                ), 404
+
+            return jsonify(
+                {
+                    "erro": str(erro),
+                }
+            ), 400
+
+        finally:
+            session.close()
+
+    @app.route(
+        "/veterinarios/<int:id_veterinario>/disponibilidades",
+        methods=["POST"],
+    )
+    def criar_disponibilidade_endpoint(id_veterinario):
+        session = Session()
+
+        try:
+            data = request.get_json(silent=True)
+
+            if data is None:
+                raise ValueError("JSON inválido")
+            
+            dia_semana = DiaSemana(data["dia_semana"])
+            hora_inicio = time.fromisoformat(data["hora_inicio"])
+            hora_fim = time.fromisoformat(data["hora_fim"])
+
+            repository = SqlAlchemyVeterinarioRepository(session)
+
+            disponibilidade = services.adicionar_disponibilidade_veterinario(
+                repository=repository,
+                id_veterinario=id_veterinario,
+                id_disponibilidade=data["id_disponibilidade"],
+                dia_semana=dia_semana,
+                hora_inicio=hora_inicio,
+                hora_fim=hora_fim,
+            )
+            session.commit()
+
+            return jsonify(
+                {
+                    "id_disponibilidade": disponibilidade.id_disponibilidade,
+                    "dia_semana": disponibilidade.dia_semana.value,
+                    "hora_inicio": disponibilidade.hora_inicio.isoformat(),
+                    "hora_fim": disponibilidade.hora_fim.isoformat(),
+                }
+            ), 201
+
+        except (ValueError, KeyError, TypeError) as erro:
+            session.rollback()
+
+            if str(erro) == "Veterinário não encontrado":
+                status_code = 404
+            else:
+                status_code = 400
+
+            return jsonify(
+                {
+                "erro": str(erro),
+                }
+            ), status_code
+
+        except IntegrityError:
+            session.rollback()
+
+            return jsonify(
+                {
+                    "erro": "Disponibilidade já cadastrada ou dados inválidos",
+                }
+            ), 409
+
+        finally:
+            session.close()
+
     return app
 
 

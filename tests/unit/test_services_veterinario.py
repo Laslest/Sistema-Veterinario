@@ -112,4 +112,3 @@ def test_adicionar_disponibilidade_veterinario_conflitante():
         adicionar_disponibilidade_veterinario(repository, 1, 2, DiaSemana.SEGUNDA, time(9, 0), time(17, 0))
 
     assert str(excinfo.value) == "Disponibilidade conflitante."
-
