@@ -1,4 +1,4 @@
-from sistema_veterinario.domain.model import Agendamento, Cliente, CPF, Disponibilidade, Paciente, Telefone, Veterinario
+from sistema_veterinario.domain.model import Agendamento, Cliente, CPF, Disponibilidade, Paciente, Telefone, Endereco, Unidade, Veterinario
 
 
 def criar_agendamento(
@@ -48,6 +48,17 @@ def cadastrar_cliente(repository, id_cliente, nome, cpf, telefone):
 
     return cliente
 
+def cadastrar_unidade(repository, id_unidade, nome, endereco, atende_domicilio,):
+    unidade = Unidade(
+        id_unidade=id_unidade,
+        nome=nome,
+        endereco=endereco,
+        atende_domicilio=atende_domicilio,
+    )
+
+    repository.add(unidade)
+
+    return unidade
 
 def buscar_cliente(repository, id_cliente):
     cliente = repository.get(id_cliente)
@@ -83,6 +94,27 @@ def buscar_paciente(repository, id_cliente, id_paciente):
         raise ValueError("Cliente não encontrado")
 
     return cliente.buscar_paciente(id_paciente)
+
+def cadastrar_unidade(repository, id_unidade, nome, endereco, atende_domicilio,):
+    unidade = Unidade(
+        id_unidade=id_unidade,
+        nome=nome,
+        endereco=endereco,
+        atende_domicilio=atende_domicilio,
+    )
+
+    repository.add(unidade)
+
+    return unidade
+
+
+def buscar_unidade(repository, id_unidade):
+    unidade = repository.get(id_unidade)
+
+    if unidade is None:
+        raise ValueError("Unidade não encontrada")
+
+    return unidade
 
 def cadastrar_veterinario(repository, id_veterinario, email, senha_hash, nome, crmv, especialidade):
 
@@ -122,3 +154,4 @@ def adicionar_disponibilidade_veterinario(repository, id_veterinario, id_disponi
     veterinario.adicionar_disponibilidade(disponibilidade)
 
     return disponibilidade
+
