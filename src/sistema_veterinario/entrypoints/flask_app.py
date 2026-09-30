@@ -6,8 +6,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from sistema_veterinario.domain.model import Endereco
 from sistema_veterinario.adapters.orm import metadata, start_mappers
-from sistema_veterinario.adapters.repository import SqlAlchemyAgendamentoRepository, SqlAlchemyClienteRepository
+from sistema_veterinario.adapters.repository import SqlAlchemyAgendamentoRepository, SqlAlchemyClienteRepository, SqlAlchemyUnidadeRepository
 from sistema_veterinario.service_layer import services
 
 
@@ -308,6 +309,132 @@ def create_app(database_url="sqlite:///sistema_veterinario.db"):
         finally:
             session.close()
 
+    @app.route("/unidades", methods=["POST"])
+    def cadastrar_unidade_endpoint():
+        session = Session()
+
+        try:
+            dados = request.get_json(silent=True)
+
+            if dados is None:
+                raise ValueError("JSON inválido")
+
+            endereco = None
+
+            if dados.get("endereco") is not None:
+                dados_endereco = dados["endereco"]
+
+                endereco = Endereco(
+                    rua=dados_endereco["rua"],
+                    numero=dados_endereco["numero"],
+                    bairro=dados_endereco["bairro"],
+                    cidade=dados_endereco["cidade"],
+                    estado=dados_endereco["estado"],
+                    cep=dados_endereco["cep"],
+                )
+
+            repository = SqlAlchemyUnidadeRepository(session)
+
+            unidade = services.cadastrar_unidade(
+                repository=repository,
+                id_unidade=dados["id_unidade"],
+                nome=dados["nome"],
+                endereco=endereco,
+                atende_domicilio=dados["atende_domicilio"],
+            )
+
+            session.commit()
+
+            return jsonify(
+                {
+                    "id_unidade": unidade.id_unidade,
+                    "nome": unidade.nome,
+                    "atende_domicilio": unidade.atende_domicilio,
+                    "endereco": (
+                        {
+                            "rua": unidade.endereco.rua,
+                            "numero": unidade.endereco.numero,
+                            "bairro": unidade.endereco.bairro,
+                            "cidade": unidade.endereco.cidade,
+                            "estado": unidade.endereco.estado,
+                            "cep": unidade.endereco.cep,
+                        }
+                        if unidade.endereco is not None
+                        else None
+                    ),
+                }
+            ), 201
+
+        except (ValueError, KeyError, TypeError) as erro:
+            session.rollback()
+
+            return jsonify(
+                {
+                    "erro": str(erro),
+                }
+            ), 400
+
+        except IntegrityError:
+            session.rollback()
+
+            return jsonify(
+                {
+                    "erro": "Unidade já cadastrada ou dados inválidos",
+                }
+            ), 409
+
+        finally:
+            session.close()
+
+
+    @app.route("/unidades/<int:id_unidade>", methods=["GET"])
+    def buscar_unidade_endpoint(id_unidade):
+        session = Session()
+
+        try:
+            repository = SqlAlchemyUnidadeRepository(session)
+
+            unidade = services.buscar_unidade(
+                repository=repository,
+                id_unidade=id_unidade,
+            )
+
+            return jsonify(
+                {
+                    "id_unidade": unidade.id_unidade,
+                    "nome": unidade.nome,
+                    "atende_domicilio": unidade.atende_domicilio,
+                    "endereco": (
+                        {
+                            "rua": unidade.endereco.rua,
+                            "numero": unidade.endereco.numero,
+                            "bairro": unidade.endereco.bairro,
+                            "cidade": unidade.endereco.cidade,
+                            "estado": unidade.endereco.estado,
+                            "cep": unidade.endereco.cep,
+                        }
+                        if unidade.endereco is not None
+                        else None
+                    ),
+                }
+            ), 200
+
+        except ValueError as erro:
+            if str(erro) == "Unidade não encontrada":
+                return jsonify(
+                    {
+                        "erro": str(erro),
+                    }
+                ), 404
+
+            return jsonify(
+                {
+                    "erro": str(erro),
+                }
+            ), 400
+
+        finally:
+            session.close()
     return app
 
 
