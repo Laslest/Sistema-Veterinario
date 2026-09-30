@@ -48,18 +48,6 @@ def cadastrar_cliente(repository, id_cliente, nome, cpf, telefone):
 
     return cliente
 
-def cadastrar_unidade(repository, id_unidade, nome, endereco, atende_domicilio,):
-    unidade = Unidade(
-        id_unidade=id_unidade,
-        nome=nome,
-        endereco=endereco,
-        atende_domicilio=atende_domicilio,
-    )
-
-    repository.add(unidade)
-
-    return unidade
-
 def buscar_cliente(repository, id_cliente):
     cliente = repository.get(id_cliente)
 
