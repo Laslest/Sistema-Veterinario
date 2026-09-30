@@ -1,4 +1,4 @@
-from sistema_veterinario.domain.model import Agendamento, Cliente, CPF, Paciente, Telefone
+from sistema_veterinario.domain.model import Agendamento, Cliente, CPF, Disponibilidade, Paciente, Telefone, Veterinario
 
 
 def criar_agendamento(
@@ -60,7 +60,7 @@ def buscar_cliente(repository, id_cliente):
 
 def adicionar_paciente(repository, id_cliente, id_paciente, nome, data_nascimento, raca_id):
     cliente = repository.get(id_cliente)
-
+    
     if cliente is None:
         raise ValueError("Cliente não encontrado")
 
@@ -74,3 +74,51 @@ def adicionar_paciente(repository, id_cliente, id_paciente, nome, data_nasciment
     cliente.adicionar_paciente(paciente)
 
     return paciente
+
+
+def buscar_paciente(repository, id_cliente, id_paciente):
+    cliente = repository.get(id_cliente)
+
+    if cliente is None:
+        raise ValueError("Cliente não encontrado")
+
+    return cliente.buscar_paciente(id_paciente)
+
+def cadastrar_veterinario(repository, id_veterinario, email, senha_hash, nome, crmv, especialidade):
+
+    veterinario = Veterinario(
+        id_veterinario=id_veterinario,
+        email=email,
+        senha_hash=senha_hash,
+        nome=nome,
+        crmv=crmv,
+        especialidade=especialidade,
+    )
+
+    repository.add(veterinario)
+
+    return veterinario
+
+def buscar_veterinario(repository, id_veterinario):
+    veterinario = repository.get(id_veterinario)
+
+    if veterinario is None:
+        raise ValueError("Veterinário não encontrado")
+
+    return veterinario
+
+def adicionar_disponibilidade_veterinario(repository, id_veterinario, id_disponibilidade, dia_semana, hora_inicio, hora_fim):
+    veterinario = repository.get(id_veterinario)
+    
+    if veterinario is None:
+        raise ValueError("Veterinário não encontrado")
+
+    disponibilidade = Disponibilidade(
+        id_disponibilidade=id_disponibilidade,
+        dia_semana=dia_semana, 
+        hora_inicio=hora_inicio, 
+        hora_fim=hora_fim)
+
+    veterinario.adicionar_disponibilidade(disponibilidade)
+
+    return disponibilidade
