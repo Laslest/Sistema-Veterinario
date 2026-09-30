@@ -947,3 +947,56 @@ Utilizei IA generativa como apoio durante a implementação da camada de serviç
 A ferramenta foi utilizada para auxiliar na revisão da estrutura dos casos de uso, organização dos endpoints, interpretação de erros, definição dos cenários de teste e revisão da documentação.
 
 A IA foi utilizada como ferramenta de apoio, enquanto a análise, execução dos testes, validação das alterações e integração do código ao projeto permaneceram sob minha responsabilidade.
+
+### Entrega Final da Fase 1 — Carlos Victor
+
+#### O que foi implementado
+
+Nesta etapa, implementei a camada de serviço e os endpoints relacionados ao agregado Veterinário, dando continuidade ao domínio e à persistência desenvolvidos nos checkpoints anteriores.
+
+Foram implementados os casos de uso para cadastrar um veterinário, buscar um veterinário pelo seu identificador e adicionar uma disponibilidade a um veterinário existente.
+
+Também foram adicionados endpoints Flask para disponibilizar esses casos de uso através da API. Foram criados endpoints para cadastro e consulta de veterinários e para adição de disponibilidades.
+
+Por fim, foram adicionados testes unitários para os casos de uso da camada de serviço e testes E2E para verificar o funcionamento completo dos endpoints, incluindo a persistência da disponibilidade associada ao veterinário.
+
+#### Arquivos modificados
+
+- `src/sistema_veterinario/service_layer/services.py`
+- `src/sistema_veterinario/entrypoints/flask_app.py`
+- `tests/unit/test_services_veterinario.py`
+- `tests/e2e/test_veterinario_api.py`
+
+#### Casos de uso implementados
+
+- Cadastro de veterinário.
+- Busca de veterinário pelo identificador.
+- Adição de disponibilidade a um veterinário.
+
+#### Decisão de projeto
+
+Foi decidido manter as regras de conflito de disponibilidade dentro do agregado `Veterinario`, enquanto a camada de serviço ficou responsável por orquestrar os casos de uso e utilizar o repositório para recuperar e persistir os dados.
+
+Dessa forma, a regra de negócio que impede disponibilidades conflitantes permanece no domínio, evitando que a camada Flask concentre regras de negócio. Os endpoints ficaram responsáveis principalmente por receber e converter os dados da requisição, chamar os serviços correspondentes e retornar as respostas HTTP.
+
+Também foi decidido não retornar o campo `senha_hash` nas respostas da API de veterinários, evitando expor esse dado através dos endpoints.
+
+#### Testes
+
+Foram adicionados testes unitários para os serviços de Veterinário, incluindo cenários de sucesso e de erro. Também foram adicionados testes E2E para:
+
+- cadastrar um veterinário;
+- buscar um veterinário cadastrado;
+- adicionar uma disponibilidade e verificar posteriormente sua persistência através da consulta do veterinário.
+
+Ao final da implementação, a suíte de testes foi executada com sucesso.
+
+- #### Commits
+
+- `6a51da4` — `feat: adiciona casos de uso de veterinario`
+- `627f5f6` — `test: adiciona cenarios de erro de veterinario`
+- `e1430d3` — `feat: adiciona endpoints e testes e2e de veterinario`
+
+#### Uso de IA generativa
+
+Utilizei IA generativa durante esta etapa para esclarecer dúvidas conceituais sobre a organização da camada de serviço, endpoints Flask e testes E2E, interpretar mensagens e resultados de testes e revisar código escrito durante o desenvolvimento.
