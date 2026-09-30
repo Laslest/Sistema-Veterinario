@@ -60,7 +60,7 @@ def test_buscar_veterinario_inexistente():
 
     assert str(excinfo.value) == "Veterinário não encontrado"
 
-def test_adicionar_disponibilidade_veterinario():
+def test_adicionar_disponibilidade_veterinario_existente():
     repository = FakeVeterinarioRepository()
     cadastrar_veterinario(
         repository=repository,
@@ -85,3 +85,31 @@ def test_adicionar_disponibilidade_veterinario():
     assert resultado.disponibilidades[0].hora_inicio == time(9, 0)
     assert resultado.disponibilidades[0].hora_fim == time(17, 0)
     assert resultado.disponibilidades[0] is disponibilidade
+
+def test_adicionar_disponibilidade_veterinario_inexistente():
+    repository = FakeVeterinarioRepository()
+
+    with pytest.raises(ValueError) as excinfo:
+        adicionar_disponibilidade_veterinario(repository, 999, 1, DiaSemana.SEGUNDA, time(9, 0), time(17, 0))
+
+    assert str(excinfo.value) == "Veterinário não encontrado"
+
+def test_adicionar_disponibilidade_veterinario_conflitante():
+    repository = FakeVeterinarioRepository()
+    cadastrar_veterinario(
+        repository=repository,
+        id_veterinario=1,
+        email="veterinario@example.com",
+        senha_hash="hashed_password",
+        nome="Veterinário Exemplo",
+        crmv="CRMV-12345",
+        especialidade="Especialidade Exemplo"
+    )
+
+    adicionar_disponibilidade_veterinario(repository, 1, 1, DiaSemana.SEGUNDA, time(9, 0), time(17, 0))
+
+    with pytest.raises(ValueError) as excinfo:
+        adicionar_disponibilidade_veterinario(repository, 1, 2, DiaSemana.SEGUNDA, time(9, 0), time(17, 0))
+
+    assert str(excinfo.value) == "Disponibilidade conflitante."
+
