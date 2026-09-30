@@ -1000,3 +1000,221 @@ Ao final da implementação, a suíte de testes foi executada com sucesso.
 #### Uso de IA generativa
 
 Utilizei IA generativa durante esta etapa para esclarecer dúvidas conceituais sobre a organização da camada de serviço, endpoints Flask e testes E2E, interpretar mensagens e resultados de testes e revisar código escrito durante o desenvolvimento.
+
+
+### David Pereira Ramos
+
+#### O que implementei
+
+Na entrega final da Fase 1, continuei responsável pelo agregado de **Cliente / Paciente**, implementando a camada de serviço, os endpoints da API Flask e os testes E2E relacionados aos principais casos de uso do agregado.
+
+No arquivo:
+
+`src/sistema_veterinario/service_layer/services.py`
+
+implementei os seguintes casos de uso:
+
+- `cadastrar_cliente()`: cria um novo `Cliente` a partir dos dados recebidos, construindo os objetos de valor `CPF` e `Telefone` e adicionando o agregado através do repositório;
+- `buscar_cliente()`: recupera um cliente pelo `id_cliente` e gera erro quando o cliente não é encontrado;
+- `adicionar_paciente()`: recupera o cliente responsável pelo agregado, cria um novo `Paciente` com os dados recebidos e utiliza a operação `adicionar_paciente()` da entidade `Cliente` para associá-lo ao agregado.
+
+A camada de serviço recebe o repositório como dependência. Dessa forma, os casos de uso não ficam diretamente acoplados ao SQLAlchemy e podem trabalhar com diferentes implementações de repositório.
+
+Nos testes unitários da camada de serviço foi utilizado o `FakeClienteRepository`, enquanto a API utiliza o `SqlAlchemyClienteRepository`.
+
+Inicialmente também foi implementado um caso de uso específico para `buscar_paciente()`. Durante a revisão da entrega, decidi removê-lo da camada de serviço para manter os casos de uso concentrados nas operações realmente necessárias para esta etapa.
+
+Também criei os testes da camada de serviço no arquivo:
+
+`tests/unit/test_services_cliente.py`
+
+Os testes verificam:
+
+- cadastro de um cliente utilizando o `FakeClienteRepository`;
+- busca de um cliente previamente cadastrado;
+- adição de um paciente ao agregado Cliente / Paciente.
+
+Na camada de entrada da aplicação, atualizei o arquivo:
+
+`src/sistema_veterinario/entrypoints/flask_app.py`
+
+adicionando os seguintes endpoints:
+
+- `POST /clientes`, responsável pelo cadastro de um novo cliente;
+- `GET /clientes/<id_cliente>`, responsável pela busca de um cliente pelo identificador;
+- `POST /clientes/<id_cliente>/pacientes`, responsável por adicionar um novo paciente ao cliente.
+
+O endpoint de cadastro de cliente recebe os dados em JSON, cria uma instância de `SqlAlchemyClienteRepository` e chama o caso de uso `cadastrar_cliente()`.
+
+Após a criação do cliente, a transação é confirmada através de:
+
+`session.commit()`
+
+e os dados do cliente são retornados pela API.
+
+O endpoint de busca utiliza o `SqlAlchemyClienteRepository` e o caso de uso `buscar_cliente()` para recuperar o agregado.
+
+Quando o cliente é encontrado, a resposta da API contém:
+
+- `id_cliente`;
+- `nome`;
+- `cpf`;
+- `telefone`;
+- coleção de `pacientes`.
+
+A inclusão da coleção de pacientes na resposta permite consultar através do próprio cliente os pacientes pertencentes ao agregado.
+
+O endpoint de adição de paciente recebe os dados do paciente em JSON.
+
+O campo:
+
+`data_nascimento`
+
+é recebido como texto no formato ISO e convertido para um objeto `date` antes da chamada da camada de serviço.
+
+O endpoint então utiliza o caso de uso:
+
+`adicionar_paciente()`
+
+que recupera o cliente e adiciona o novo paciente à sua coleção através da própria entidade de domínio.
+
+Após a operação, a transação também é confirmada utilizando `session.commit()`.
+
+Também foram adicionados tratamentos de erro para situações como:
+
+- JSON inválido;
+- campos obrigatórios ausentes;
+- tipos de dados inválidos;
+- cliente inexistente;
+- conflitos de persistência;
+- identificadores já cadastrados ou outros dados inválidos.
+
+Os códigos HTTP utilizados foram:
+
+- `201` para cadastro de cliente realizado com sucesso;
+- `201` para paciente adicionado com sucesso;
+- `200` para cliente encontrado;
+- `400` para dados inválidos;
+- `404` para cliente inexistente;
+- `409` para conflitos de persistência.
+
+Também criei os testes E2E no arquivo:
+
+`tests/e2e/test_cliente_api.py`
+
+Os testes utilizam:
+
+`create_app("sqlite:///:memory:")`
+
+permitindo executar a aplicação Flask utilizando um banco SQLite em memória.
+
+Dessa maneira, os testes não dependem do arquivo de banco utilizado normalmente pela aplicação.
+
+Os testes E2E verificam os seguintes cenários:
+
+- cadastro de cliente através de `POST /clientes`;
+- retorno HTTP `201` no cadastro;
+- retorno correto dos dados do cliente;
+- busca do cliente através de `GET /clientes/<id_cliente>`;
+- retorno HTTP `200` na busca;
+- recuperação correta dos dados anteriormente persistidos;
+- verificação de que um cliente recém-criado inicia sem pacientes;
+- adição de paciente através de `POST /clientes/<id_cliente>/pacientes`;
+- retorno HTTP `201` na criação do paciente;
+- retorno correto dos dados do paciente criado;
+- nova consulta ao cliente após a inclusão do paciente;
+- confirmação de que o paciente permaneceu associado e persistido na coleção de pacientes do cliente.
+
+No teste de adição de paciente, além de verificar diretamente a resposta do `POST`, também é realizada posteriormente uma nova requisição:
+
+`GET /clientes/<id_cliente>`
+
+A resposta dessa consulta é utilizada para verificar se o paciente criado realmente pode ser recuperado dentro da coleção de pacientes do cliente.
+
+Esse teste permite exercitar o fluxo entre:
+
+- API Flask;
+- camada de serviço;
+- Repository Pattern;
+- SQLAlchemy;
+- mapeamento ORM;
+- SQLite;
+- domínio Cliente / Paciente.
+
+#### Commits
+
+Commits realizados nesta entrega:
+
+- `59992c9` - `feat: adiciona casos de uso do agregado Cliente / Paciente`
+- `4898333` - `test: adiciona testes unitarios dos casos de uso do Cliente`
+- `a807a62` - `refactor: remove caso de uso buscar_paciente referente ao agregado Cliente / Paciente`
+- `f05ba5a` - `adiciona API do agregado Cliente / Paciente`
+- `9b49979` - `test: adiciona testes da API do agregado Cliente / Paciente`
+
+#### Decisões de projeto
+
+Decidi manter três casos de uso principais na camada de serviço do agregado Cliente / Paciente:
+
+- cadastro de cliente;
+- busca de cliente;
+- adição de paciente.
+
+Inicialmente existia também um caso de uso específico para busca de paciente, porém ele foi removido durante a revisão da implementação.
+
+A intenção foi manter a camada de serviço concentrada nos fluxos necessários para esta entrega e evitar a criação de operações que não seriam utilizadas pelos endpoints definidos para esta etapa.
+
+Mantive `Cliente` como a raiz do agregado Cliente / Paciente.
+
+Por esse motivo, a operação de adicionar um paciente continua sendo realizada através da própria entidade `Cliente`.
+
+O serviço `adicionar_paciente()` fica responsável principalmente por coordenar o caso de uso:
+
+1. recuperar o cliente através do repositório;
+2. verificar se o cliente existe;
+3. criar a entidade `Paciente`;
+4. chamar `cliente.adicionar_paciente()`.
+
+Dessa maneira, regras de negócio relacionadas à coleção de pacientes, como impedir a inclusão de pacientes duplicados, continuam concentradas no domínio e não na camada Flask.
+
+Também decidi manter a camada de serviço independente da implementação concreta do repositório.
+
+Os serviços recebem o repositório como parâmetro, permitindo utilizar:
+
+- `FakeClienteRepository` nos testes unitários;
+- `SqlAlchemyClienteRepository` durante a execução da aplicação.
+
+Essa separação reduz o acoplamento da camada de serviço com a infraestrutura de persistência.
+
+Mantive também o controle das transações fora do repositório e da camada de domínio.
+
+Os endpoints Flask são responsáveis por executar:
+
+`session.commit()`
+
+quando uma operação é concluída com sucesso e:
+
+`session.rollback()`
+
+quando ocorre um erro durante uma operação que modifica o banco.
+
+O endpoint de busca do cliente retorna também sua coleção de pacientes.
+
+Essa decisão permite que a consulta da raiz do agregado apresente os pacientes associados ao cliente, sem necessidade de criar um endpoint separado apenas para a busca de paciente nesta etapa.
+
+Essa estrutura também foi utilizada nos testes E2E para verificar a persistência.
+
+Depois de adicionar um paciente através do endpoint de criação, uma nova consulta ao cliente é realizada para confirmar que o paciente pode ser recuperado dentro da coleção.
+
+Para os testes E2E, decidi utilizar SQLite em memória através de:
+
+`create_app("sqlite:///:memory:")`
+
+Essa escolha permite executar os testes de forma isolada, sem depender de registros existentes no banco utilizado pela aplicação e sem criar arquivos permanentes de banco durante os testes.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa como apoio durante esta etapa para esclarecer dúvidas relacionadas à organização da camada de serviço, Repository Pattern, integração entre Flask e SQLAlchemy, estrutura dos endpoints e testes E2E.
+
+A ferramenta também foi utilizada como apoio para interpretação de erros, revisão de código escrito durante o desenvolvimento, análise da estrutura dos testes e organização desta documentação.
+
+A IA foi utilizada como ferramenta de apoio e revisão, enquanto as decisões de implementação, execução dos testes, validação das alterações e integração do código ao repositório permaneceram sob minha responsabilidade.
