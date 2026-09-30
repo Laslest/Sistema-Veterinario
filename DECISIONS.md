@@ -836,3 +836,114 @@ A camada de serviço recebe o repositório como dependência. Dessa forma, os ca
 Para os testes E2E, decidi utilizar SQLite em memória em vez do arquivo `sistema_veterinario.db`. Isso permite que os testes sejam executados de forma isolada, sem depender de registros deixados por execuções anteriores.
 
 Também ajustei a inicialização dos mapeamentos ORM para que classes já mapeadas não sejam mapeadas novamente. Esse ajuste foi necessário porque a aplicação Flask e os testes de integração podem inicializar os mapeamentos durante uma mesma execução do pytest.
+
+
+### Cauã Raphael Santos de Paula
+
+#### O que implementei
+
+Na entrega final da Fase 1, continuei responsável pelo agregado de **Unidade / Local de Atendimento**, implementando a camada de serviço, a API Flask e os testes E2E relacionados ao agregado.
+
+No arquivo:
+
+`src/sistema_veterinario/service_layer/services.py`
+
+implementei os casos de uso:
+
+- `cadastrar_unidade()`: cria uma nova instância de `Unidade`, adiciona a unidade através do repositório e retorna a entidade criada;
+- `buscar_unidade()`: recupera uma unidade pelo identificador e lança `ValueError` quando a unidade não é encontrada.
+
+Também foram criados testes unitários para esses casos de uso no arquivo:
+
+`tests/unit/test_services_unidade.py`
+
+Os testes verificam:
+
+- cadastro de uma unidade através da camada de serviço;
+- armazenamento da unidade no `FakeUnidadeRepository`;
+- busca de uma unidade existente;
+- busca de uma unidade inexistente;
+- geração do erro `Unidade não encontrada`.
+
+Durante a revisão da camada de serviço, também foi corrigida uma duplicação existente no caso de uso `cadastrar_unidade()`.
+
+Na camada de entrada da aplicação, implementei no arquivo:
+
+`src/sistema_veterinario/entrypoints/flask_app.py`
+
+os endpoints:
+
+- `POST /unidades`, responsável pelo cadastro de uma nova unidade;
+- `GET /unidades/<id_unidade>`, responsável pela busca de uma unidade pelo identificador.
+
+O endpoint de cadastro recebe os dados da unidade em JSON e, quando existe um endereço informado, converte os dados recebidos para uma instância do objeto de valor `Endereco`.
+
+Para realizar a persistência, o endpoint utiliza o `SqlAlchemyUnidadeRepository` e chama o caso de uso `cadastrar_unidade()`.
+
+Após a criação, a transação é confirmada através de `session.commit()` e os dados da unidade são retornados com status HTTP `201`.
+
+Também foi mantido o suporte às unidades que realizam atendimento a domicílio e não possuem endereço físico.
+
+O endpoint de busca utiliza o `SqlAlchemyUnidadeRepository` e o caso de uso `buscar_unidade()`.
+
+Quando a unidade existe, seus dados são retornados com status HTTP `200`.
+
+Quando a unidade não é encontrada, a API retorna status HTTP `404` com a mensagem `Unidade não encontrada`.
+
+Também foram adicionados tratamentos para dados inválidos, campos obrigatórios ausentes e conflitos de persistência.
+
+Criei os testes E2E no arquivo:
+
+`tests/e2e/test_unidade_api.py`
+
+Os testes utilizam a aplicação Flask através de `create_app()` e SQLite em memória.
+
+Os cenários testados verificam:
+
+- cadastro de uma unidade física com endereço;
+- retorno HTTP `201` no cadastro;
+- dados da unidade e do endereço retornados corretamente;
+- busca de uma unidade existente;
+- retorno HTTP `200` na busca;
+- retorno HTTP `404` para unidade inexistente;
+- cadastro de uma unidade de atendimento domiciliar sem endereço físico.
+
+#### Commits
+
+Commits realizados nesta entrega:
+
+- `885608d` - `feat: adiciona casos de uso de unidade`
+- `f2e9690` - `test: adiciona testes dos servicos de unidade`
+- `13852f0` - `fix: cadastro unidade`
+- `844079e` - `feat: adiciona endpoints de unidade`
+- `7c68eee` - `test: adiciona testes e2e de unidade`
+
+#### Decisões de projeto
+
+Decidi manter a camada de serviço independente da API Flask. Dessa forma, os casos de uso recebem um repositório como dependência e não conhecem detalhes relacionados a HTTP ou SQLAlchemy.
+
+A API fica responsável por interpretar os dados recebidos, criar o objeto de valor `Endereco` quando necessário e chamar os casos de uso correspondentes.
+
+Essa separação permite utilizar o `FakeUnidadeRepository` nos testes unitários da camada de serviço e o `SqlAlchemyUnidadeRepository` durante a execução da aplicação.
+
+Mantive `Endereco` como objeto de valor do domínio. Por esse motivo, o endpoint converte os dados de endereço recebidos em JSON para uma instância de `Endereco` antes de criar a entidade `Unidade`.
+
+Também mantive a regra de que uma unidade que não realiza atendimento a domicílio precisa possuir endereço. Unidades que realizam atendimento a domicílio podem ser cadastradas sem endereço físico.
+
+Para os testes E2E, utilizei SQLite em memória através de `create_app("sqlite:///:memory:")`, permitindo testar o fluxo completo entre API, camada de serviço, repositório e persistência de forma isolada.
+
+Os códigos HTTP utilizados foram:
+
+- `201` para unidade cadastrada com sucesso;
+- `200` para unidade encontrada;
+- `400` para dados inválidos;
+- `404` para unidade inexistente;
+- `409` para conflitos de persistência.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa como apoio durante a implementação da camada de serviço, dos endpoints Flask e dos testes E2E do agregado Unidade / Local de Atendimento.
+
+A ferramenta foi utilizada para auxiliar na revisão da estrutura dos casos de uso, organização dos endpoints, interpretação de erros, definição dos cenários de teste e revisão da documentação.
+
+A IA foi utilizada como ferramenta de apoio, enquanto a análise, execução dos testes, validação das alterações e integração do código ao projeto permaneceram sob minha responsabilidade.
