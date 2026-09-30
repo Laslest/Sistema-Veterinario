@@ -173,6 +173,9 @@ def start_mappers():
                     unidades.c.cidade,
                     unidades.c.estado,
                     unidades.c.cep,
+                    return_none_on=lambda *campos: all(
+                        campo is None for campo in campos
+                    ),
                 ),
             },
         )
