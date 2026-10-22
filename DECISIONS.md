@@ -1268,10 +1268,13 @@ No documento, analisei a implementação existente na Fase 1, incluindo as regra
 
 Também descrevi como essa decisão está representada nas camadas de domínio, serviço, persistência e API, além das alternativas consideradas, consequências positivas, limitações e possibilidades de evolução.
 
+Além do mais contribuí para o arquivo docs/arquitetura.md, complementando a análise dos trade-offs relacionados ao agregado Unidade / Local de Atendimento. Analisei os impactos do endereço opcional na manutenibilidade, testabilidade e persistência, além de acrescentar evidências dos commits e testes do agregado.
+
 #### Commits
 
 - `45f6c17` — `docs: adiciona ADR 0002 de unidade` (20/10/2026).
 - `27a881b — docs: registra autorrelato do Caua na fase 2` (21/10/2026).
+- `d653976` — `docs: complementa arquitetura com analise de Unidade` (22/10/2026).
 
 #### Decisão de projeto
 
