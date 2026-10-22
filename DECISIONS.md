@@ -1271,7 +1271,7 @@ Também descrevi como essa decisão está representada nas camadas de domínio, 
 #### Commits
 
 - `45f6c17` — `docs: adiciona ADR 0002 de unidade` (20/10/2026).
-- `docs: registra autorrelato do Cauã na fase 2` — commit deste autorrelato (preencher o hash após o registro, se necessário).
+- `27a881b — docs: registra autorrelato do Caua na fase 2` (21/10/2026).
 
 #### Decisão de projeto
 
