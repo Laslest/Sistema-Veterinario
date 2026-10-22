@@ -1218,3 +1218,40 @@ Utilizei IA generativa como apoio durante esta etapa para esclarecer dúvidas re
 A ferramenta também foi utilizada como apoio para interpretação de erros, revisão de código escrito durante o desenvolvimento, análise da estrutura dos testes e organização desta documentação.
 
 A IA foi utilizada como ferramenta de apoio e revisão, enquanto as decisões de implementação, execução dos testes, validação das alterações e integração do código ao repositório permaneceram sob minha responsabilidade.
+
+# Parte 2
+
+## Fase 2 - Checkpoint 1
+
+### Davi Gesteira dos Anjos Paula
+
+#### O que fiz
+
+Participei da análise da arquitetura existente usando o agregado Agendamento como caso de estudo. Documentei a separação entre a entidade `Agendamento`, os casos de uso de `service_layer/services.py`, a API em `entrypoints/flask_app.py` e os adaptadores de persistência, e a comparei com a alternativa de Flask com Active Record.
+
+Em `docs/arquitetura.md`, escrevi os cenários de qualidade de manutenibilidade, testabilidade e confiabilidade a partir de Agendamento, o diagrama de componentes com a direção das dependências, o diagrama de sequência do cancelamento, a análise de trade-offs e as evidências. Ao conferir o código, registrei pontos em que a implementação ainda não atende os cenários: os testes E2E de agendamento cobrem só os casos de sucesso, um agendamento pode ser criado para paciente, veterinário ou unidade inexistentes, o endpoint de cancelamento escolhe o código HTTP comparando o texto da exceção e `requirements.txt` não fixa versões.
+
+Criei o ADR `docs/adr/0001-repository-service-layer-agendamento.md`, que registra a decisão, tomada na Fase 1, de manter as regras no domínio e os casos de uso na Service Layer, com as alternativas Transaction Script e Active Record e as consequências.
+
+Arquivos:
+
+- `docs/arquitetura.md`
+- `docs/adr/0001-repository-service-layer-agendamento.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits
+
+- `60d8553` - `docs: adiciona ADR 0001 de agendamento` (20/10/2026)
+- `b929d53` - `docs: adiciona análise de arquitetura e evidências` (21/10/2026)
+- Este autorrelato foi registrado em commit próprio, `docs: registra autorrelato da fase 2 checkpoint 1` (21/10/2026).
+
+#### Decisão de projeto
+
+Decidi manter as transições de estado e a validação de data dentro da entidade `Agendamento`, com a Service Layer apenas buscando o agendamento e delegando, em vez de verificar o status nas rotas Flask. A justificativa é que a regra precisa valer para qualquer ponto de entrada e ser testada sem API nem banco: com SQLAlchemy 2.0.55, os 85 testes unitários continuam passando enquanto os de integração e E2E quebram. Como próximo passo, proponho trocar a comparação por texto no endpoint de cancelamento por uma exceção específica (`AgendamentoNaoEncontrado`), para que o código HTTP não dependa da mensagem.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa (Claude) para organizar a estrutura inicial dos documentos, redigir e revisar os cenários de atributos de qualidade, comparar a arquitetura atual com Active Record e melhorar a clareza do ADR.
+
+Também usei a IA para conferir os documentos com o enunciado e com o repositório: ela verificou os hashes e as contagens de linhas com `git show --stat` e `wc -l`, executou a suíte com `pytest` por pasta para medir os tempos e repetiu os testes com SQLAlchemy 2.0.55 em um ambiente separado. Um segundo agente de IA revisou criticamente o resultado, e os erros apontados foram corrigidos.
+
