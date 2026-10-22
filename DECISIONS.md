@@ -1341,8 +1341,9 @@ Arquivos trabalhados neste checkpoint:
 
 #### Commits
 
-- `5ea0f32` — `docs: adiciona ADR 0003 de cliente / paciente`
-- `b7dfb61` — `docs: complementa arquitetura com analise do agregado cliente / paciente`
+- `5ea0f32` — `docs: adiciona ADR 0003 de cliente / paciente` (21/10/2026)
+- `b7dfb61` — `docs: complementa arquitetura com analise do agregado cliente / paciente` (22/10/2026)
+- `17a5675` — `docs: adiciona autorrelato no DECISIONS.md em contribuição com a arquitetura` (22/10/2026)
 
 #### Decisão de projeto
 
