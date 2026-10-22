@@ -1255,3 +1255,37 @@ Utilizei IA generativa (Claude) para organizar a estrutura inicial dos documento
 
 Também usei a IA para conferir os documentos com o enunciado e com o repositório: ela verificou os hashes e as contagens de linhas com `git show --stat` e `wc -l`, executou a suíte com `pytest` por pasta para medir os tempos e repetiu os testes com SQLAlchemy 2.0.55 em um ambiente separado. Um segundo agente de IA revisou criticamente o resultado, e os erros apontados foram corrigidos.
 
+
+### Cauã Raphael Santos de Paula
+
+#### O que fiz
+
+Neste checkpoint da Fase 2, documentei uma decisão arquitetural relacionada ao agregado Unidade / Local de Atendimento.
+
+Criei o arquivo `docs/adr/0002-endereco-objeto-valor-unidade.md`, registrando a decisão de manter `Endereco` como objeto de valor imutável e `Unidade` como entidade identificada por `id_unidade`.
+
+No documento, analisei a implementação existente na Fase 1, incluindo as regras de validação do endereço, sua obrigatoriedade para unidades físicas e a possibilidade de cadastrar unidades que realizam atendimento domiciliar sem endereço fixo.
+
+Também descrevi como essa decisão está representada nas camadas de domínio, serviço, persistência e API, além das alternativas consideradas, consequências positivas, limitações e possibilidades de evolução.
+
+#### Commits
+
+- `45f6c17` — `docs: adiciona ADR 0002 de unidade` (20/10/2026).
+- `docs: registra autorrelato do Cauã na fase 2` — commit deste autorrelato (preencher o hash após o registro, se necessário).
+
+#### Decisão de projeto
+
+Decidi manter `Endereco` como objeto de valor, pois ele não possui identidade própria no domínio e seus atributos são utilizados para descrever uma unidade.
+
+A obrigatoriedade do endereço continua sendo responsabilidade da entidade `Unidade`. Dessa forma, unidades físicas precisam possuir endereço, enquanto unidades que realizam atendimento domiciliar podem ser cadastradas sem endereço fixo.
+
+Essa abordagem mantém as regras no domínio e evita criar uma entidade e uma tabela adicionais apenas para armazenar o endereço.
+
+Como consequência, o mapeamento ORM e a API precisam tratar corretamente a ausência do endereço. Considerei esse custo aceitável porque permite representar os diferentes tipos de local de atendimento.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa (ChatGPT) para organizar a estrutura inicial da documentação, redigir e revisar o ADR relacionado ao agregado Unidade / Local de Atendimento, analisar as alternativas arquiteturais para a modelagem de `Endereco` como objeto de valor e melhorar a clareza das justificativas e consequências da decisão.
+
+Também utilizei a IA para conferir o documento com o enunciado da Fase 2 e com a implementação existente no repositório. A ferramenta auxiliou na análise das classes `Unidade` e `Endereco`, na identificação dos trade-offs da arquitetura e na verificação dos arquivos e hashes dos commits utilizados como evidências. Além disso, comparei a organização do documento com o ADR de Agendamento desenvolvido por outro integrante, buscando manter um padrão de documentação consistente entre os agregados.
+
