@@ -1292,3 +1292,80 @@ Utilizei IA generativa (ChatGPT) para organizar a estrutura inicial da documenta
 
 Também utilizei a IA para conferir o documento com o enunciado da Fase 2 e com a implementação existente no repositório. A ferramenta auxiliou na análise das classes `Unidade` e `Endereco`, na identificação dos trade-offs da arquitetura e na verificação dos arquivos e hashes dos commits utilizados como evidências. Além disso, comparei a organização do documento com o ADR de Agendamento desenvolvido por outro integrante, buscando manter um padrão de documentação consistente entre os agregados.
 
+
+
+### David Pereira Ramos
+
+#### O que fiz
+
+Neste checkpoint da Fase 2, participei da análise da arquitetura existente utilizando o agregado **Cliente / Paciente** como caso de estudo.
+
+Criei o arquivo:
+
+`docs/adr/0003-cliente-raiz-agregado-paciente.md`
+
+Nesse ADR, registrei e reavaliei uma decisão tomada durante a Fase 1: manter `Cliente` como **raiz do agregado Cliente / Paciente**, enquanto `Paciente` permanece como uma entidade interna do agregado, sem possuir um repositório próprio.
+
+Para fundamentar essa decisão, analisei sua evolução no histórico do repositório. A entidade `Paciente` foi introduzida no commit `ca43c8a` e `Cliente` foi definido explicitamente como raiz do agregado em `29e37f3`. Posteriormente, a persistência também passou a refletir essa fronteira através das tabelas e do mapeamento ORM (`9e6f465` e `6d248c0`) e da criação do `SqlAlchemyClienteRepository` em `72fc4cc`, sem a criação de um repositório específico para `Paciente`.
+
+No ADR também analisei alternativas para essa decisão, como transformar `Paciente` em uma raiz de agregado independente, criar um repositório específico apenas para consultas de pacientes ou acessar `Paciente` diretamente através do SQLAlchemy.
+
+Como consequência positiva, identifiquei a centralização das regras relacionadas à coleção de pacientes dentro de `Cliente`, incluindo a regra que impede pacientes duplicados. Como custo da decisão, consultas independentes sobre pacientes ficam menos diretas, já que atualmente não existe um `SqlAlchemyPacienteRepository`.
+
+Também contribuí para o arquivo:
+
+`docs/arquitetura.md`
+
+acrescentando uma análise arquitetural específica do agregado Cliente / Paciente na seção de trade-offs.
+
+Nessa análise, relacionei a decisão de manter `Cliente` como raiz aos atributos de **manutenibilidade**, **confiabilidade na validação das operações** e **testabilidade**. A centralização das regras no domínio favorece esses atributos, enquanto a ausência de uma porta de persistência específica para `Paciente` reduz a simplicidade e a flexibilidade de determinadas consultas.
+
+Também acrescentei evidências do histórico do repositório para sustentar a análise, utilizando commits relacionados à criação da raiz do agregado, ao mapeamento ORM, ao Repository Pattern, à Service Layer e aos testes.
+
+Entre as principais evidências utilizadas estão:
+
+- `29e37f3` — definição de `Cliente` como raiz do agregado;
+- `6d248c0` — mapeamento ORM do agregado Cliente / Paciente;
+- `72fc4cc` — criação do `SqlAlchemyClienteRepository`;
+- `4242c70` — testes de integração da persistência de Cliente e Paciente;
+- `0cdbe4c` e `1bbe0ae` — implementação e testes do `FakeClienteRepository`;
+- `59992c9` e `4898333` — casos de uso e seus testes unitários;
+- `a807a62` — remoção do caso de uso independente `buscar_paciente()`;
+- `f05ba5a` e `9b49979` — API e testes E2E do agregado.
+
+Arquivos trabalhados neste checkpoint:
+
+- `docs/adr/0003-cliente-raiz-agregado-paciente.md`
+- `docs/arquitetura.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits
+
+- `5ea0f32` — `docs: adiciona ADR 0003 de cliente / paciente`
+- `b7dfb61` — `docs: complementa arquitetura com analise do agregado cliente / paciente`
+
+#### Decisão de projeto
+
+Decidi manter `Cliente` como **raiz do agregado Cliente / Paciente**, sem criar um repositório independente para `Paciente`.
+
+Embora `Paciente` possua identidade própria através de `id_paciente`, os casos de uso implementados atualmente tratam o paciente dentro do contexto do cliente responsável. Por isso, operações que modificam sua associação permanecem concentradas em `Cliente`.
+
+Essa decisão permite que regras como impedir a inclusão de pacientes duplicados sejam aplicadas diretamente no domínio, independentemente da API ou da tecnologia utilizada para persistência.
+
+Na camada de persistência, `SqlAlchemyClienteRepository` funciona como a porta de persistência do agregado, enquanto os pacientes são armazenados e recuperados através do relacionamento ORM existente com a raiz. Nos testes unitários, a mesma fronteira é mantida através de `FakeClienteRepository`.
+
+O principal trade-off identificado é entre **manutenibilidade e confiabilidade** de um lado e **simplicidade e flexibilidade de consulta** do outro. Manter as alterações passando pela raiz concentra as regras e reduz os pontos capazes de modificar o agregado, mas torna consultas independentes de pacientes menos diretas.
+
+Considerei esse custo aceitável para os requisitos atuais. Caso `Paciente` passe a possuir um ciclo de vida mais independente, com consultas globais frequentes, prontuário próprio ou operações administrativas que não dependam do cliente, essa fronteira deverá ser reavaliada.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa (ChatGPT) como apoio na elaboração e revisão da documentação deste checkpoint.
+
+A ferramenta foi utilizada para revisar e organizar o ADR `0003`, auxiliando na descrição do contexto, da decisão, das alternativas consideradas, das consequências e dos trade-offs relacionados à escolha de `Cliente` como raiz do agregado.
+
+Também utilizei a IA para analisar quais commits da Fase 1 eram relevantes como evidências da decisão arquitetural e para comparar o conteúdo produzido com os materiais de aula sobre requisitos arquiteturais, estilos, trade-offs, riscos, visões arquiteturais e Architecture Decision Records.
+
+Na contribuição para `docs/arquitetura.md`, a IA auxiliou na organização da análise do agregado Cliente / Paciente, principalmente na relação da decisão com os atributos de manutenibilidade, confiabilidade e testabilidade e na seleção das evidências do histórico do repositório.
+
+Por fim, utilizei a ferramenta para revisar este autorrelato e manter sua estrutura consistente com as subseções dos demais integrantes. A conferência dos commits, a análise das decisões, a validação do conteúdo e a integração dos documentos ao repositório permaneceram sob minha responsabilidade.
