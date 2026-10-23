@@ -1370,3 +1370,48 @@ Também utilizei a IA para analisar quais commits da Fase 1 eram relevantes como
 Na contribuição para `docs/arquitetura.md`, a IA auxiliou na organização da análise do agregado Cliente / Paciente, principalmente na relação da decisão com os atributos de manutenibilidade, confiabilidade e testabilidade e na seleção das evidências do histórico do repositório.
 
 Por fim, utilizei a ferramenta para revisar este autorrelato e manter sua estrutura consistente com as subseções dos demais integrantes. A conferência dos commits, a análise das decisões, a validação do conteúdo e a integração dos documentos ao repositório permaneceram sob minha responsabilidade.
+
+### Carlos Victor dos Santos Dantas
+
+#### O que fiz
+
+Neste checkpoint da Fase 2, analisei a arquitetura do agregado Veterinário, principalmente a forma como as disponibilidades são gerenciadas e como as regras de conflito de horários estão distribuídas entre as camadas do sistema.
+
+Criei o arquivo `docs/adr/0004-disponibilidade-no-agregado-veterinario.md`, documentando a decisão tomada na Fase 1 de manter a validação dos conflitos de disponibilidade dentro da entidade `Veterinario`.
+
+No ADR, analisei o contexto da decisão, as alternativas consideradas, suas vantagens, limitações e consequências. Também relacionei a decisão aos princípios de separação de responsabilidades e às camadas de domínio, serviço e persistência.
+
+Além disso, contribuí para o arquivo `docs/arquitetura.md`, adicionando a seção 4.8, com uma análise específica dos trade-offs do agregado Veterinário.
+
+Nessa análise, relacionei a arquitetura aos atributos de manutenibilidade, testabilidade e confiabilidade. Identifiquei como principais benefícios a centralização das regras no domínio e a possibilidade de utilizar repositórios falsos nos testes.
+
+Como limitações, destaquei a possibilidade de alterações diretas na coleção de disponibilidades e a ausência de garantias adicionais para operações concorrentes.
+
+Também acrescentei as evidências 12, 13 e 14 na seção 6, utilizando arquivos, testes e commits da Fase 1 para fundamentar a análise.
+
+#### Arquivos
+
+- `docs/adr/0004-disponibilidade-no-agregado-veterinario.md`
+- `docs/arquitetura.md`
+- `DECISIONS.md` (este autorrelato)
+
+#### Commits
+
+- `13e0039f` — `docs: adiciona ADR de disponibilidade do veterinario` (21/10/2026).
+- `4b8608d3` — `docs: complementa arquitetura com analise de veterinario` (22/10/2026).
+
+#### Decisão de projeto
+
+Decidi manter a validação dos conflitos de disponibilidade dentro da entidade `Veterinario`, em vez de implementá-la diretamente nos endpoints Flask ou na camada de serviço.
+
+Essa escolha mantém a regra de negócio centralizada no domínio e permite verificar seu funcionamento através de testes unitários, sem depender de uma API ou de um banco de dados.
+
+O principal trade-off identificado foi entre simplicidade e garantias de consistência. A implementação atual atende aos casos de uso existentes, mas pode precisar de mecanismos adicionais de controle transacional caso o sistema passe a receber alterações simultâneas de vários usuários.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa (ChatGPT) como apoio na elaboração e revisão da documentação deste checkpoint.
+
+A ferramenta auxiliou na organização e redação do ADR, na análise das alternativas arquiteturais, na identificação dos trade-offs e na relação entre as decisões de projeto e os atributos de qualidade.
+
+A documentação foi elaborada com base na implementação existente, e a publicação dos commits foi realizada através da minha conta no GitHub.
