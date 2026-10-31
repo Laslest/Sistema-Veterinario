@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, date, time
 from typing import Optional, List
@@ -102,6 +103,19 @@ class Veterinario:
                raise ValueError("Disponibilidade conflitante.")
         self.disponibilidades.append(disponibilidade)
 
+class Relogio(ABC):
+
+    @abstractmethod
+    def agora(self) -> datetime:
+        raise NotImplementedError
+
+
+class RelogioDoSistema(Relogio):
+
+    def agora(self) -> datetime:
+        return datetime.now()
+
+
 class Agendamento:
 
     def __init__(
@@ -112,8 +126,12 @@ class Agendamento:
         id_unidade,
         id_tipo_agendamento,
         data_hora,
+        relogio: Optional[Relogio] = None,
     ):
-        if data_hora <= datetime.now():
+        if relogio is None:
+            relogio = RelogioDoSistema()
+
+        if data_hora <= relogio.agora():
             raise ValueError("A data do agendamento deve ser futura")
 
         self.id_agendamento = id_agendamento

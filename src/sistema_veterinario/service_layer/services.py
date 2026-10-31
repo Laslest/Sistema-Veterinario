@@ -9,6 +9,7 @@ def criar_agendamento(
     id_unidade,
     id_tipo_agendamento,
     data_hora,
+    relogio=None,
 ):
     agendamento = Agendamento(
         id_agendamento=id_agendamento,
@@ -17,6 +18,7 @@ def criar_agendamento(
         id_unidade=id_unidade,
         id_tipo_agendamento=id_tipo_agendamento,
         data_hora=data_hora,
+        relogio=relogio,
     )
 
     repository.add(agendamento)
