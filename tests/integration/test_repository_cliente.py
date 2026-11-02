@@ -1,10 +1,12 @@
+import pytest
+
 from datetime import date
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from sistema_veterinario.adapters.orm import metadata
-from sistema_veterinario.adapters.repository import SqlAlchemyClienteRepository
+from sistema_veterinario.adapters.repository import ClienteJaCadastradoError, SqlAlchemyClienteRepository
 from sistema_veterinario.domain.model import Cliente, CPF, Paciente, Telefone
 
 
@@ -102,3 +104,43 @@ def test_repository_busca_cliente_inexistente_retorna_none():
     assert resultado is None
 
     session.close()
+
+def test_repository_nao_substitui_cliente_com_id_duplicado():
+    engine = create_engine("sqlite:///:memory:")
+    metadata.create_all(engine)
+
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    try:
+        repository = SqlAlchemyClienteRepository(session)
+
+        cliente_original = Cliente(
+            id_cliente=1,
+            nome="João Silva",
+            cpf=CPF(numero="52998224725"),
+            telefone=Telefone(numero="11999999999"),
+        )
+
+        cliente_duplicado = Cliente(
+            id_cliente=1,
+            nome="Maria Silva",
+            cpf=CPF(numero="11144477735"),
+            telefone=Telefone(numero="21988888888"),
+        )
+
+        repository.add(cliente_original)
+        session.commit()
+
+        with pytest.raises(ClienteJaCadastradoError):
+            repository.add(cliente_duplicado)
+
+        resultado = repository.get(1)
+
+        assert resultado is not None
+        assert resultado.id_cliente == 1
+        assert resultado.nome == "João Silva"
+
+    finally:
+        session.close()
+        engine.dispose()

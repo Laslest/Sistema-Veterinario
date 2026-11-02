@@ -106,3 +106,31 @@ def test_api_adiciona_paciente():
     assert paciente["nome"] == "Rex"
     assert paciente["data_nascimento"] == "2020-05-10"
     assert paciente["raca_id"] == 5
+
+def test_api_retorna_409_ao_cadastrar_cliente_com_id_duplicado():
+    client = criar_client()
+
+    cliente_original = {
+        "id_cliente": 1,
+        "nome": "João Silva",
+        "cpf": "52998224725",
+        "telefone": "11999999999",
+    }
+
+    cliente_duplicado = {
+        "id_cliente": 1,
+        "nome": "Maria Silva",
+        "cpf": "11144477735",
+        "telefone": "21988888888",
+    }
+
+    primeira_resposta = client.post("/clientes", json=cliente_original)
+    segunda_resposta = client.post("/clientes", json=cliente_duplicado)
+
+    assert primeira_resposta.status_code == 201
+    assert segunda_resposta.status_code == 409
+
+    resposta_busca = client.get("/clientes/1")
+
+    assert resposta_busca.status_code == 200
+    assert resposta_busca.get_json()["nome"] == "João Silva"
