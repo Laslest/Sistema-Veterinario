@@ -1415,3 +1415,36 @@ Utilizei IA generativa (ChatGPT) como apoio na elaboração e revisão da docume
 A ferramenta auxiliou na organização e redação do ADR, na análise das alternativas arquiteturais, na identificação dos trade-offs e na relação entre as decisões de projeto e os atributos de qualidade.
 
 A documentação foi elaborada com base na implementação existente, e a publicação dos commits foi realizada através da minha conta no GitHub.
+
+
+## Fase 2 - Checkpoint 2
+
+### Davi Gesteira dos Anjos Paula
+
+#### O que fiz
+
+Encontrei e corrigi uma violação do Princípio da Inversão de Dependência (DIP) no agregado Agendamento. A regra "a data do agendamento deve ser futura", em `Agendamento.__init__`, chamava `datetime.now()` diretamente, no código do commit `9fdc4d5` (26/09/2026). Com isso, o resultado dependia do fuso do servidor: em 30/10/2026, a mesma requisição `POST /agendamentos` respondeu 201 com `TZ=America/Sao_Paulo` e 400 com `TZ=UTC`. Além disso, o limite da regra não podia ser testado.
+
+Criei a abstração `Relogio` e a implementação `RelogioDoSistema` em `domain/model.py`. O `Agendamento` passou a receber um `relogio` opcional, e `criar_agendamento` passou a repassá-lo. Acrescentei três testes com um `RelogioFixo`, que cobrem o uso do relógio injetado, o limite `data_hora == agora` e o repasse pelo caso de uso. Os 103 testes da Fase 1 continuaram passando sem alteração, e a suíte foi para 106 testes. Documentei a refatoração em `docs/solid.md`.
+
+Arquivos:
+
+- `src/sistema_veterinario/domain/model.py`
+- `src/sistema_veterinario/service_layer/services.py`
+- `tests/unit/test_agendamento_relogio.py`
+- `docs/solid.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits
+
+- `f730509` - `refactor: inverte dependência do Agendamento em relação ao relógio do sistema (DIP)` (31/10/2026)
+- `f3b9135` - `docs: adiciona refatoração SOLID de agendamento` (01/11/2026)
+- Esta subseção foi registrada em commit próprio, `docs: registra autorrelato da fase 2 checkpoint 2` (02/11/2026).
+
+#### Decisão de projeto
+
+Decidi manter o parâmetro `relogio` opcional, com `RelogioDoSistema` como padrão, em vez de torná-lo obrigatório. Assim, nenhuma chamada existente nem nenhum teste da Fase 1 precisou mudar, e esses testes servem como prova de que o comportamento padrão foi preservado. O custo, registrado em `docs/solid.md`, é que o domínio ainda conhece a implementação concreta usada por padrão.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa (Claude) para identificar a violação de DIP, escrever a refatoração e os testes, rodar a suíte e redigir a seção de `docs/solid.md`; um segundo agente de IA revisou o resultado e as correções apontadas foram aplicadas. Conferi o resultado e fiz os commits com a minha conta, e a responsabilidade pelo conteúdo continua sendo minha.
