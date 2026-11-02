@@ -8,7 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 from sistema_veterinario.domain.model import Endereco, DiaSemana
 from sistema_veterinario.adapters.orm import metadata, start_mappers
-from sistema_veterinario.adapters.repository import SqlAlchemyAgendamentoRepository, SqlAlchemyClienteRepository, SqlAlchemyUnidadeRepository, SqlAlchemyVeterinarioRepository
+from sistema_veterinario.adapters.repository import ClienteJaCadastradoError, SqlAlchemyAgendamentoRepository, SqlAlchemyClienteRepository, SqlAlchemyUnidadeRepository, SqlAlchemyVeterinarioRepository
 from sistema_veterinario.service_layer import services
 
 
@@ -170,7 +170,7 @@ def create_app(database_url="sqlite:///sistema_veterinario.db"):
                 }
             ), 400
 
-        except IntegrityError:
+        except (IntegrityError, ClienteJaCadastradoError):
             session.rollback()
 
             return jsonify(

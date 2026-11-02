@@ -15,6 +15,21 @@ class AbstractRepository(ABC):
     def get(self, id_entidade):
         raise NotImplementedError
 
+class ClienteJaCadastradoError(Exception):
+    """Erro lançado quando um cliente com o mesmo ID já existe."""
+    pass
+
+class ClienteRepository(AbstractRepository):
+    """
+    Contrato do repositório do agregado Cliente/Paciente.
+
+    Um cliente existente não pode ser substituído por outro
+    com o mesmo identificador.
+    """
+
+    @abstractmethod
+    def add(self, cliente: Cliente):
+        raise NotImplementedError
 
 class SqlAlchemyAgendamentoRepository(AbstractRepository):
 
@@ -28,12 +43,32 @@ class SqlAlchemyAgendamentoRepository(AbstractRepository):
         return self.session.get(Agendamento, id_agendamento)
 
 
-class SqlAlchemyClienteRepository(AbstractRepository):
+class SqlAlchemyClienteRepository(ClienteRepository):
 
     def __init__(self, session: Session):
         self.session = session
 
     def add(self, cliente: Cliente):
+        outro_pendente = any(
+            isinstance(entidade, Cliente)
+            and entidade.id_cliente == cliente.id_cliente
+            and entidade is not cliente
+            for entidade in self.session.new
+        )
+
+        if outro_pendente:
+            raise ClienteJaCadastradoError(
+                f"Cliente com ID {cliente.id_cliente} já cadastrado"
+            )
+
+        with self.session.no_autoflush:
+            existente = self.session.get(Cliente, cliente.id_cliente)
+
+        if existente is not None and existente is not cliente:
+            raise ClienteJaCadastradoError(
+                f"Cliente com ID {cliente.id_cliente} já cadastrado"
+            )
+
         self.session.add(cliente)
 
     def get(self, id_cliente: int):
@@ -87,12 +122,18 @@ class FakeVeterinarioRepository(AbstractRepository):
         return self.veterinarios.get(id_veterinario)
 
 
-class FakeClienteRepository(AbstractRepository):
+class FakeClienteRepository(ClienteRepository):
 
     def __init__(self):
         self.clientes = {}
 
     def add(self, cliente: Cliente):
+        existente = self.clientes.get(cliente.id_cliente)
+
+        if existente is not None and existente is not cliente:
+            raise ClienteJaCadastradoError(
+                f"Cliente com ID {cliente.id_cliente} já cadastrado"
+            )
         self.clientes[cliente.id_cliente] = cliente
 
     def get(self, id_cliente: int):
