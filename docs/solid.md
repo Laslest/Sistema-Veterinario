@@ -87,3 +87,92 @@ O custo é pequeno: duas classes novas (`Relogio` e `RelogioDoSistema`) e um par
 Limitação: o domínio ainda instancia `RelogioDoSistema` como padrão, o que foi aceito para não alterar as chamadas e os testes existentes.
 
 O custo compensa porque a regra de data é a principal invariante na criação de um agendamento e passa a ser testável de forma determinística, inclusive no limite. Além disso, a correção do problema de fuso deixa de exigir mudança na entidade: basta fornecer outro `Relogio`.
+
+### Cliente — David Pereira Ramos
+
+### Princípio relacionado
+
+**Princípio da Substituição de Liskov (LSP).**
+
+O Princípio da Substituição de Liskov estabelece que implementações de uma abstração devem poder ser utilizadas de maneira intercambiável, sem comprometer o comportamento esperado pelo contrato.
+
+Neste caso, as implementações `FakeClienteRepository` e `SqlAlchemyClienteRepository` devem respeitar as mesmas regras comportamentais do repositório de Cliente, independentemente da tecnologia utilizada para armazenamento.
+
+### Problema concreto
+
+Antes da refatoração, as duas implementações apresentavam comportamentos diferentes diante de clientes com o mesmo identificador.
+
+As implementações originais foram introduzidas nos seguintes commits:
+
+- `72fc4cc` (`feat: adiciona repositório SQLAlchemy de Cliente`, 27/09/2026).
+- `0cdbe4c` (`feat: adiciona FakeClienteRepository`, 27/09/2026).
+
+No estado anterior à refatoração, o método `add()` do `FakeClienteRepository` realizava uma atribuição direta ao dicionário:
+
+```python
+def add(self, cliente: Cliente):
+    self.clientes[cliente.id_cliente] = cliente
+```
+
+Dessa forma, quando outro cliente com o mesmo identificador era adicionado, o objeto anteriormente armazenado era silenciosamente substituído.
+
+Já o `SqlAlchemyClienteRepository` realizava apenas a inclusão do objeto na sessão:
+
+```python
+def add(self, cliente: Cliente):
+    self.session.add(cliente)
+```
+
+Nesse caso, não existia uma verificação explícita de duplicidade no método `add()`. A restrição de chave primária do banco de dados ficava responsável por impedir a persistência de registros com o mesmo identificador.
+
+Portanto, as implementações apresentavam comportamentos diferentes diante da mesma situação.
+
+O contrato abstrato anterior, baseado em `AbstractRepository`, não especificava explicitamente como as implementações deveriam tratar a duplicidade de identificadores.
+
+Essa inconsistência motivou a formalização de um contrato específico para o repositório de Cliente, alinhando o comportamento das implementações.
+
+### Refatoração
+
+Commit "depois": `53715cc` (`refactor: formaliza contrato do repositório de Cliente`, 02/11/2026).
+
+Foram realizadas as seguintes alterações:
+
+- Criada a classe abstrata `ClienteRepository`, especializada no contrato do agregado Cliente/Paciente.
+- Criada a exceção `ClienteJaCadastradoError`, utilizada para identificar tentativas de cadastro de clientes com identificadores já existentes.
+- Alterado o `SqlAlchemyClienteRepository` para herdar de `ClienteRepository`.
+- Alterado o `FakeClienteRepository` para herdar de `ClienteRepository`.
+- Implementada uma verificação de duplicidade no `FakeClienteRepository`, impedindo a substituição de um cliente por outro com o mesmo ID.
+- Implementada uma verificação de duplicidade no `SqlAlchemyClienteRepository`, considerando tanto outros clientes pendentes na sessão quanto clientes já persistidos.
+- Atualizado o endpoint de cadastro de Cliente em `flask_app.py` para tratar `ClienteJaCadastradoError`, além de `IntegrityError`, retornando HTTP 409 em caso de duplicidade ou dados inválidos.
+
+A partir da refatoração, as duas implementações passaram a respeitar a mesma regra comportamental: um objeto `Cliente` diferente não pode substituir outro cliente que já possua o mesmo identificador.
+
+Com isso, foi formalizado um contrato comum para as implementações Fake e SQLAlchemy, fortalecendo sua substituibilidade e alinhando seus comportamentos.
+
+### Como os testes garantiram a preservação do comportamento
+
+Foram acrescentados testes para verificar o contrato nas diferentes camadas da aplicação:
+
+- **Testes unitários:** verificam que o `FakeClienteRepository` rejeita a inclusão de outro cliente com o mesmo ID e preserva o objeto originalmente cadastrado.
+- **Testes de integração:** verificam que o `SqlAlchemyClienteRepository` também rejeita clientes com identificadores duplicados e mantém os dados do cliente original.
+- **Testes E2E:** verificam que a API retorna HTTP 409 quando ocorre uma tentativa de cadastrar outro cliente com um ID já existente, preservando o cadastro original.
+
+Os resultados dos testes específicos foram:
+
+- 3 testes unitários aprovados.
+- 4 testes de integração aprovados.
+- 4 testes E2E aprovados.
+
+Além dos testes específicos, a suíte completa do projeto foi executada e todos os testes passaram, sem regressões identificadas.
+
+### Custo e por que compensa
+
+A refatoração introduziu uma abstração específica para o repositório de Cliente, uma exceção para representar tentativas de cadastro duplicado e verificações explícitas nas duas implementações.
+
+O custo adicional consiste na manutenção desse contrato e das verificações de unicidade em ambas as implementações.
+
+Esse custo compensa porque elimina a inconsistência comportamental existente entre os repositórios Fake e SQLAlchemy, tornando explícita uma regra importante do agregado Cliente/Paciente.
+
+Além disso, os testes permitem verificar que as duas implementações respeitam o mesmo contrato, reduzindo o risco de diferenças de comportamento quando uma implementação é substituída pela outra.
+
+A principal contribuição para o LSP foi, portanto, a formalização do contrato comportamental e o alinhamento das implementações, fortalecendo a possibilidade de utilizá-las de maneira intercambiável.
