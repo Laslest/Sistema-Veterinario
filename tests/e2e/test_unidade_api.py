@@ -116,3 +116,8 @@ def test_api_cadastra_unidade_domiciliar_sem_endereco():
     assert dados["nome"] == "Atendimento Veterinário Móvel"
     assert dados["atende_domicilio"] is True
     assert dados["endereco"] is None
+
+    resposta_busca = client.get("/unidades/103")
+
+    assert resposta_busca.status_code == 200
+    assert resposta_busca.get_json() == dados

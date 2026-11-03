@@ -10,6 +10,7 @@ from sistema_veterinario.domain.model import Endereco, DiaSemana
 from sistema_veterinario.adapters.orm import metadata, start_mappers
 from sistema_veterinario.adapters.repository import ClienteJaCadastradoError, SqlAlchemyAgendamentoRepository, SqlAlchemyClienteRepository, SqlAlchemyUnidadeRepository, SqlAlchemyVeterinarioRepository
 from sistema_veterinario.service_layer import services
+from sistema_veterinario.entrypoints.serializers import serializar_unidade
 
 
 def create_app(database_url="sqlite:///sistema_veterinario.db"):
@@ -346,23 +347,7 @@ def create_app(database_url="sqlite:///sistema_veterinario.db"):
             session.commit()
 
             return jsonify(
-                {
-                    "id_unidade": unidade.id_unidade,
-                    "nome": unidade.nome,
-                    "atende_domicilio": unidade.atende_domicilio,
-                    "endereco": (
-                        {
-                            "rua": unidade.endereco.rua,
-                            "numero": unidade.endereco.numero,
-                            "bairro": unidade.endereco.bairro,
-                            "cidade": unidade.endereco.cidade,
-                            "estado": unidade.endereco.estado,
-                            "cep": unidade.endereco.cep,
-                        }
-                        if unidade.endereco is not None
-                        else None
-                    ),
-                }
+                serializar_unidade(unidade)
             ), 201
 
         except (ValueError, KeyError, TypeError) as erro:
@@ -400,23 +385,7 @@ def create_app(database_url="sqlite:///sistema_veterinario.db"):
             )
 
             return jsonify(
-                {
-                    "id_unidade": unidade.id_unidade,
-                    "nome": unidade.nome,
-                    "atende_domicilio": unidade.atende_domicilio,
-                    "endereco": (
-                        {
-                            "rua": unidade.endereco.rua,
-                            "numero": unidade.endereco.numero,
-                            "bairro": unidade.endereco.bairro,
-                            "cidade": unidade.endereco.cidade,
-                            "estado": unidade.endereco.estado,
-                            "cep": unidade.endereco.cep,
-                        }
-                        if unidade.endereco is not None
-                        else None
-                    ),
-                }
+                serializar_unidade(unidade)
             ), 200
 
         except ValueError as erro:
