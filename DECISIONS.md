@@ -1448,3 +1448,124 @@ Decidi manter o parâmetro `relogio` opcional, com `RelogioDoSistema` como padr�
 #### Uso de IA generativa
 
 Utilizei IA generativa (Claude) para identificar a violação de DIP, escrever a refatoração e os testes, rodar a suíte e redigir a seção de `docs/solid.md`; um segundo agente de IA revisou o resultado e as correções apontadas foram aplicadas. Conferi o resultado e fiz os commits com a minha conta, e a responsabilidade pelo conteúdo continua sendo minha.
+
+### David Pereira Ramos
+
+#### O que fiz
+
+Neste checkpoint da Fase 2, fiquei responsável por uma refatoração relacionada ao agregado Cliente / Paciente, tendo como principal objetivo alinhar o comportamento das implementações do repositório de Cliente com base no Princípio da Substituição de Liskov (LSP).
+
+Durante a análise do código existente, identifiquei uma inconsistência comportamental entre o `FakeClienteRepository` e o `SqlAlchemyClienteRepository` ao tentar cadastrar dois clientes diferentes com o mesmo identificador.
+
+As implementações originais podem ser observadas nos seguintes commits:
+
+- `72fc4cc` — `feat: adiciona repositório SQLAlchemy de Cliente` (27/09/2026).
+- `0cdbe4c` — `feat: adiciona FakeClienteRepository` (27/09/2026).
+
+Antes da refatoração, o `FakeClienteRepository` utilizava uma atribuição direta ao dicionário:
+
+```python
+def add(self, cliente: Cliente):
+    self.clientes[cliente.id_cliente] = cliente
+```
+
+Com isso, caso outro cliente fosse adicionado com o mesmo identificador, o objeto anteriormente armazenado era silenciosamente substituído.
+
+Já o `SqlAlchemyClienteRepository` realizava apenas:
+
+```python
+def add(self, cliente: Cliente):
+    self.session.add(cliente)
+```
+
+Nesse caso, não havia uma verificação explícita de duplicidade no método `add()`, ficando a restrição de chave primária do banco de dados responsável por impedir a persistência de registros com o mesmo identificador.
+
+O contrato anterior, baseado em `AbstractRepository`, não especificava explicitamente como as implementações deveriam se comportar diante dessa situação.
+
+Para resolver essa inconsistência, realizei as seguintes alterações no arquivo:
+
+`src/sistema_veterinario/adapters/repository.py`
+
+- Criei a classe abstrata `ClienteRepository`, especializada no contrato do agregado Cliente / Paciente.
+- Criei a exceção `ClienteJaCadastradoError`, utilizada para identificar tentativas de cadastrar outro cliente com um identificador já existente.
+- Alterei o `FakeClienteRepository` para herdar de `ClienteRepository`.
+- Alterei o `SqlAlchemyClienteRepository` para herdar de `ClienteRepository`.
+- Implementei a verificação de duplicidade no repositório Fake, impedindo que um cliente diferente substitua outro já armazenado com o mesmo ID.
+- Implementei a verificação no repositório SQLAlchemy, considerando tanto outros clientes pendentes na sessão quanto clientes já persistidos no banco de dados.
+
+Também atualizei o arquivo:
+
+`src/sistema_veterinario/entrypoints/flask_app.py`
+
+O endpoint de cadastro de Cliente passou a tratar `ClienteJaCadastradoError`, além de `IntegrityError`. Quando ocorre uma duplicidade ou uma situação de dados inválidos contemplada por esse tratamento, a transação é revertida com `session.rollback()` e a API retorna HTTP 409.
+
+Para verificar o comportamento das implementações, acrescentei testes nos seguintes arquivos:
+
+- `tests/unit/test_fake_repository_cliente.py`
+- `tests/integration/test_repository_cliente.py`
+- `tests/e2e/test_cliente_api.py`
+
+Os testes verificam que:
+
+- O repositório Fake rejeita a inclusão de outro cliente com o mesmo identificador.
+- O cliente originalmente cadastrado permanece armazenado após a tentativa de duplicidade.
+- O repositório SQLAlchemy também rejeita clientes diferentes com o mesmo identificador.
+- O registro original continua preservado após a tentativa de cadastro duplicado.
+- A API retorna HTTP 409 diante de uma tentativa de cadastrar outro cliente com o mesmo ID.
+- A consulta posterior continua retornando os dados do cliente original.
+
+Os resultados dos testes específicos foram:
+
+- 3 testes unitários aprovados.
+- 4 testes de integração aprovados.
+- 4 testes E2E aprovados.
+
+Também executei a suíte completa do projeto após as alterações, e todos os testes passaram.
+
+Por fim, documentei a refatoração no arquivo:
+
+`docs/solid.md`
+
+Nele, registrei o problema anterior, as alterações realizadas, a relação com o LSP, os testes utilizados como evidência e os custos e benefícios da solução.
+
+#### Arquivos trabalhados
+
+- `src/sistema_veterinario/adapters/repository.py`
+- `src/sistema_veterinario/entrypoints/flask_app.py`
+- `tests/unit/test_fake_repository_cliente.py`
+- `tests/integration/test_repository_cliente.py`
+- `tests/e2e/test_cliente_api.py`
+- `docs/solid.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits
+
+Commits realizados neste checkpoint:
+
+- `53715cc` — `refactor: formaliza contrato do repositório de Cliente`
+- `f8d4215` — `test: verifica substituibilidade dos repositorios de Cliente, baseando no principio de LSP`
+- `38f3003` — `docs: adiciona refatoração SOLID de cliente`
+
+#### Decisão de projeto
+
+Decidi criar uma abstração específica chamada `ClienteRepository`, mantendo `AbstractRepository` como contrato genérico para os repositórios do sistema.
+
+Essa decisão permite estabelecer regras comportamentais específicas para o agregado Cliente / Paciente sem exigir que todos os outros repositórios implementem regras que não fazem parte de suas responsabilidades.
+
+Também decidi criar a exceção `ClienteJaCadastradoError` para representar explicitamente a tentativa de cadastrar um cliente diferente com um identificador que já está sendo utilizado.
+
+Optei por aplicar essa verificação nas duas implementações, `FakeClienteRepository` e `SqlAlchemyClienteRepository`, em vez de deixar que somente o banco de dados identificasse a duplicidade.
+
+Dessa forma, o repositório Fake passou a reproduzir essa regra de comportamento do repositório SQLAlchemy, evitando que os testes realizados exclusivamente em memória aceitem uma operação que não deveria ser permitida na aplicação real.
+
+No repositório SQLAlchemy, também mantive a proteção oferecida pela restrição de chave primária do banco de dados. A verificação implementada no repositório complementa essa proteção, enquanto o tratamento de `IntegrityError` permanece na API para situações identificadas durante a persistência.
+
+A principal relação dessa decisão com o Princípio da Substituição de Liskov (LSP) está na formalização de um contrato comportamental comum para as duas implementações. Assim, tanto o repositório Fake quanto o SQLAlchemy passam a respeitar a mesma regra de unicidade.
+
+É importante destacar que o contrato anterior não especificava explicitamente esse comportamento. Por isso, considero a alteração uma formalização e um alinhamento das implementações, fortalecendo sua substituibilidade.
+
+O principal custo dessa decisão é a necessidade de manter a regra de duplicidade nas duas implementações. Entretanto, considero esse custo aceitável porque o comportamento fica explícito, os testes conseguem verificar a mesma regra nas duas versões do repositório e a aplicação não depende exclusivamente das restrições do banco para apresentar um comportamento consistente.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa (ChatGPT) como ferramenta de apoio durante este checkpoint. A ferramenta foi utilizada para revisar o código do agregado, identificar a oportunidade de refatoração do LSP, sugerir a estrutura do contrato de repositório e revisar a documentação. A implementação manual do código, a execução e validação da suíte de testes (unitários, integração e E2E) e a integração das alterações no repositório permaneceram sob minha responsabilidade.
