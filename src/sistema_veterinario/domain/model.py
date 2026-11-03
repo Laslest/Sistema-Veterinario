@@ -76,14 +76,34 @@ class Disponibilidade:
 
     def __post_init__(self):
         if not isinstance(self.dia_semana, DiaSemana):
-            raise ValueError("O dia da semana deve ser um valor de DiaSemana")
+            raise ValueError(
+                "O dia da semana deve ser um valor de DiaSemana"
+            )
+
         if self.hora_inicio >= self.hora_fim:
             raise ValueError(
                 "O horário de início deve ser menor do que o horário final"
             )
 
+    def conflita_com(self, outra: "Disponibilidade") -> bool:
+        """Verifica se dois intervalos se sobrepoem no mesmo dia."""
+        return (
+            self.dia_semana == outra.dia_semana
+            and self.hora_inicio < outra.hora_fim
+            and self.hora_fim > outra.hora_inicio
+        )
+
+
 class Veterinario:
-    def __init__(self, id_veterinario, email, senha_hash, nome, crmv, especialidade):
+    def __init__(
+        self,
+        id_veterinario,
+        email,
+        senha_hash,
+        nome,
+        crmv,
+        especialidade,
+    ):
         self.id_veterinario = id_veterinario
         self.email = email
         self.senha_hash = senha_hash
@@ -92,15 +112,20 @@ class Veterinario:
         self.especialidade = especialidade
         self.disponibilidades = []
 
-        if not self.email or not self.senha_hash or not self.nome or not self.crmv or not self.especialidade:
+        if (
+            not self.email
+            or not self.senha_hash
+            or not self.nome
+            or not self.crmv
+            or not self.especialidade
+        ):
             raise ValueError("Todos os campos são obrigatórios.")
 
     def adicionar_disponibilidade(self, disponibilidade):
         for existente in self.disponibilidades:
-           if (disponibilidade.dia_semana == existente.dia_semana 
-               and disponibilidade.hora_inicio < existente.hora_fim 
-               and disponibilidade.hora_fim > existente.hora_inicio):
-               raise ValueError("Disponibilidade conflitante.")
+            if disponibilidade.conflita_com(existente):
+                raise ValueError("Disponibilidade conflitante.")
+
         self.disponibilidades.append(disponibilidade)
 
 class Relogio(ABC):
