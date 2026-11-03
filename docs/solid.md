@@ -176,3 +176,31 @@ Esse custo compensa porque elimina a inconsistência comportamental existente en
 Além disso, os testes permitem verificar que as duas implementações respeitam o mesmo contrato, reduzindo o risco de diferenças de comportamento quando uma implementação é substituída pela outra.
 
 A principal contribuição para o LSP foi, portanto, a formalização do contrato comportamental e o alinhamento das implementações, fortalecendo a possibilidade de utilizá-las de maneira intercambiável.
+
+## Unidade / Local de Atendimento — Cauã Raphael Santos de Paula
+
+### Princípio aplicado
+
+**Princípio da Responsabilidade Única (SRP), aplicado à apresentação da API.** A conversão da entidade Unidade para o JSON de resposta foi concentrada em uma função própria.
+
+### Evidência e problema
+
+Antes do commit `ecffe2f`, os endpoints `cadastrar_unidade_endpoint` e `buscar_unidade_endpoint`, em `src/sistema_veterinario/entrypoints/flask_app.py`, montavam separadamente o mesmo JSON de Unidade. Ambos enumeravam os mesmos campos e convertiam `Endereco`, incluindo o caso em que o endereço é ausente.
+
+Assim, uma alteração no formato de resposta da Unidade exigia atualizar os dois endpoints. Isso criava risco de o cadastro e a busca devolverem representações diferentes.
+
+### Refatoração
+
+No commit `ecffe2f` (`refactor: aplica SRP na serializacao de Unidade`, 02/11/2026 no horário de Brasília), extraí a conversão para `serializar_unidade`, em `src/sistema_veterinario/entrypoints/serializers.py`. Os dois endpoints agora chamam essa função.
+
+As rotas continuam cuidando do fluxo HTTP, da sessão, da chamada dos serviços e dos códigos de status. O serializador apenas transforma a Unidade em um dicionário compatível com a resposta da API. O comportamento de domínio não foi alterado: endereço presente continua sendo serializado, e endereço ausente continua resultando em `"endereco": null`.
+
+### Testes e evidência
+
+- `tests/unit/test_serializers.py` cobre unidades com endereço e domiciliares sem endereço.
+- `tests/e2e/test_unidade_api.py` confirma que a busca após o cadastro domiciliar retorna o mesmo JSON do cadastro.
+- A CI do commit `ecffe2f` executou a suíte completa e terminou com sucesso: [execução 103](https://github.com/Laslest/Sistema-Veterinario/actions/runs/41562531649).
+
+### Custo e limite
+
+A mudança adiciona o módulo `serializers.py` e uma função de apresentação específica para Unidade. Em troca, remove a duplicação entre cadastro e busca e mantém a representação da API em um ponto. O escopo foi mantido nessa resposta; as outras rotas e agregados não foram alterados.

@@ -1569,3 +1569,36 @@ O principal custo dessa decisão é a necessidade de manter a regra de duplicida
 #### Uso de IA generativa
 
 Utilizei IA generativa (ChatGPT) como ferramenta de apoio durante este checkpoint. A ferramenta foi utilizada para revisar o código do agregado, identificar a oportunidade de refatoração do LSP, sugerir a estrutura do contrato de repositório e revisar a documentação. A implementação manual do código, a execução e validação da suíte de testes (unitários, integração e E2E) e a integração das alterações no repositório permaneceram sob minha responsabilidade.
+
+### Cauã Raphael Santos de Paula
+
+#### O que fiz
+
+Neste checkpoint, trabalhei na apresentação HTTP do agregado Unidade / Local de Atendimento. Antes da refatoração, os endpoints de cadastro e busca em `src/sistema_veterinario/entrypoints/flask_app.py` montavam separadamente o mesmo JSON da Unidade, incluindo a conversão do endereço e o caso domiciliar sem endereço.
+
+No commit `ecffe2f`, extraí essa conversão para `serializar_unidade`, em `src/sistema_veterinario/entrypoints/serializers.py`, e alterei os dois endpoints para reutilizá-la. Acrescentei dois testes unitários para a representação de unidades com e sem endereço e ampliei o teste E2E para comparar as respostas de cadastro e busca de uma unidade domiciliar.
+
+#### Arquivos trabalhados
+
+- `src/sistema_veterinario/entrypoints/flask_app.py`
+- `src/sistema_veterinario/entrypoints/serializers.py`
+- `tests/unit/test_serializers.py`
+- `tests/e2e/test_unidade_api.py`
+- `docs/solid.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commit de implementação
+
+- `ecffe2f` — `refactor: aplica SRP na serializacao de Unidade` (02/11/2026, horário de Brasília).
+
+#### Decisão de projeto
+
+Mantive o serializador em `entrypoints`, junto ao adaptador HTTP, porque sua função é representar a entidade no formato JSON da API. As rotas permanecem responsáveis pelo fluxo HTTP; o serializador não contém regras de negócio e não depende de Flask, sessão ou banco de dados.
+
+#### Verificação
+
+A execução de CI associada ao commit `ecffe2f` concluiu com sucesso e executou a suíte completa do projeto ([execução 103](https://github.com/Laslest/Sistema-Veterinario/actions/runs/41562531649)).
+
+#### Uso de IA generativa
+
+Utilizei o ChatGPT como apoio para analisar a duplicação nos endpoints de Unidade, propor a extração do serializador, elaborar os testes e preparar a documentação desta contribuição. Conferi as descrições com o código e com o estado do repositório. A revisão final e a decisão de integrar a contribuição permaneceram sob minha responsabilidade.
