@@ -204,3 +204,97 @@ As rotas continuam cuidando do fluxo HTTP, da sessão, da chamada dos serviços 
 ### Custo e limite
 
 A mudança adiciona o módulo `serializers.py` e uma função de apresentação específica para Unidade. Em troca, remove a duplicação entre cadastro e busca e mantém a representação da API em um ponto. O escopo foi mantido nessa resposta; as outras rotas e agregados não foram alterados.
+
+## Veterinário — Carlos Victor dos Santos Dantas
+
+### Princípio violado
+
+**Princípio da Responsabilidade Única (SRP — Single Responsibility Principle).**
+
+No agregado Veterinário, a classe `Veterinario` era responsável por gerenciar sua coleção de disponibilidades e também por implementar diretamente a lógica de comparação entre intervalos de horários.
+
+Commit "antes": `df3242c` (`feat: atualiza modelo de veterinario e disponibilidade`), realizado na Fase 1, antes de 06/10/2026.
+
+Trecho anterior em `src/sistema_veterinario/domain/model.py`:
+
+```python
+def adicionar_disponibilidade(self, disponibilidade):
+    for existente in self.disponibilidades:
+        if (
+            disponibilidade.dia_semana == existente.dia_semana
+            and disponibilidade.hora_inicio < existente.hora_fim
+            and disponibilidade.hora_fim > existente.hora_inicio
+        ):
+            raise ValueError("Disponibilidade conflitante.")
+
+    self.disponibilidades.append(disponibilidade)
+```
+
+### Problema concreto
+
+O método `adicionar_disponibilidade()` acumulava duas responsabilidades: verificar se dois intervalos se sobrepunham e controlar a inclusão de disponibilidades na agenda do veterinário.
+
+Com essa implementação, qualquer mudança na regra de comparação de horários exigiria modificar diretamente a classe `Veterinario`, mesmo sendo uma lógica relacionada às características de `Disponibilidade`.
+
+Embora essas responsabilidades estejam relacionadas ao mesmo domínio, a separação permite melhorar a coesão das classes, reduzir o conhecimento do agregado sobre os detalhes da comparação e facilitar os testes.
+
+### Refatoração
+
+Commit "depois": `86c5816` (`refactor: aplica SRP na validacao de disponibilidades do veterinario`), realizado em 02/11/2026.
+
+Foi criado o método `conflita_com()` na classe `Disponibilidade`, responsável por verificar se dois intervalos apresentam sobreposição no mesmo dia da semana.
+
+```python
+def conflita_com(self, outra: "Disponibilidade") -> bool:
+    """Verifica se dois intervalos se sobrepoem no mesmo dia."""
+    return (
+        self.dia_semana == outra.dia_semana
+        and self.hora_inicio < outra.hora_fim
+        and self.hora_fim > outra.hora_inicio
+    )
+```
+
+A classe `Veterinario` passou a delegar essa verificação:
+
+```python
+def adicionar_disponibilidade(self, disponibilidade):
+    for existente in self.disponibilidades:
+        if disponibilidade.conflita_com(existente):
+            raise ValueError("Disponibilidade conflitante.")
+
+    self.disponibilidades.append(disponibilidade)
+```
+
+Dessa forma, `Disponibilidade` concentra a regra de comparação dos intervalos, enquanto `Veterinario` continua responsável por controlar a inclusão de horários em sua agenda.
+
+A refatoração preservou a regra de negócio na camada de domínio, sem exigir alterações na Service Layer, nos repositórios ou nos endpoints Flask.
+
+### Como os testes garantiram que o comportamento não mudou
+
+Foi criado o arquivo `tests/unit/test_disponibilidade_conflitos.py`, contendo nove casos de teste, incluindo sete cenários parametrizados.
+
+Os testes verificam:
+
+- Sobreposições parciais e totais entre intervalos.
+- Intervalos contidos em outros.
+- Horários consecutivos, que continuam permitidos.
+- Intervalos separados, sem conflito.
+- Horários sobrepostos em dias diferentes, que não representam conflito.
+- Rejeição de uma disponibilidade conflitante pela entidade `Veterinario`.
+- Preservação da coleção após uma tentativa de inclusão inválida.
+
+O teste parametrizado também verifica a simetria da comparação, independentemente da ordem dos objetos.
+
+Os testes anteriores de `Veterinario` e `Disponibilidade` foram preservados, e a suíte automatizada continuou passando após a refatoração, sem regressões identificadas.
+
+### Custo e por que compensa
+
+O principal custo foi a introdução do método `conflita_com()` e de uma delegação entre as classes `Veterinario` e `Disponibilidade`.
+
+Essa alteração acrescenta uma pequena indireção ao código, mas não exige novas classes, bibliotecas, alterações no banco de dados ou modificações na API.
+
+O benefício é uma distribuição mais clara das responsabilidades, permitindo testar a comparação de intervalos independentemente do gerenciamento da agenda.
+
+A refatoração não resolve outras limitações, como a possibilidade de modificar diretamente a coleção pública de disponibilidades e a ausência de proteção contra operações concorrentes.
+
+Considerei o custo aceitável porque a alteração é localizada, preserva o comportamento existente e melhora a organização e a testabilidade do domínio.

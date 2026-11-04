@@ -1602,3 +1602,52 @@ A execução de CI associada ao commit `ecffe2f` concluiu com sucesso e executou
 #### Uso de IA generativa
 
 Utilizei o ChatGPT como apoio para analisar a duplicação nos endpoints de Unidade, propor a extração do serializador, elaborar os testes e preparar a documentação desta contribuição. Conferi as descrições com o código e com o estado do repositório. A revisão final e a decisão de integrar a contribuição permaneceram sob minha responsabilidade.
+
+
+### Carlos Victor dos Santos Dantas
+
+#### O que fiz
+
+Neste checkpoint da Fase 2, realizei uma refatoração relacionada ao Princípio da Responsabilidade Única (SRP) no agregado Veterinário.
+
+Ao analisar a implementação existente, identifiquei que o método `Veterinario.adicionar_disponibilidade()` acumulava a responsabilidade de controlar a inclusão de disponibilidades e a lógica de comparação dos intervalos de horários.
+
+Para melhorar a separação dessas responsabilidades, criei o método `conflita_com()` na classe `Disponibilidade`, transferindo para ela a verificação de sobreposição entre intervalos no mesmo dia da semana.
+
+A classe `Veterinario` continuou responsável por gerenciar sua coleção de disponibilidades, mas passou a delegar a comparação dos horários para `Disponibilidade`.
+
+Também criei o arquivo `tests/unit/test_disponibilidade_conflitos.py`, contendo nove casos de teste para verificar sobreposições, horários consecutivos, dias diferentes e rejeição de conflitos.
+
+Os testes existentes foram preservados, permitindo verificar que a refatoração não alterou o comportamento esperado do sistema.
+
+Por fim, documentei a violação identificada, os commits antes e depois, as alterações implementadas, os testes e os custos da refatoração em `docs/solid.md`.
+
+#### Arquivos trabalhados
+
+- `src/sistema_veterinario/domain/model.py`
+- `tests/unit/test_disponibilidade_conflitos.py`
+- `docs/solid.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits
+
+- `86c5816` — `refactor: aplica SRP na validacao de disponibilidades do veterinario` (02/11/2026).
+- Este autorrelato e a documentação da refatoração foram preparados para o segundo commit do checkpoint, em 03/11/2026.
+
+O commit histórico `df3242c`, da Fase 1, foi utilizado como referência do código anterior à refatoração.
+
+#### Decisão de projeto
+
+Decidi concentrar a lógica de comparação de horários na classe `Disponibilidade`, mantendo a responsabilidade de inclusão e controle da agenda na classe `Veterinario`.
+
+Essa escolha melhora a coesão das classes e permite testar a verificação de conflitos de forma independente.
+
+A alternativa seria manter toda a comparação dentro de `Veterinario`, como na implementação original. Entretanto, isso manteria o agregado responsável pelos detalhes da comparação temporal.
+
+O principal custo da solução foi acrescentar uma delegação entre objetos, que considerei aceitável diante da melhoria na separação de responsabilidades e na testabilidade.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa (ChatGPT) como ferramenta de apoio durante este checkpoint.
+
+A ferramenta auxiliou na análise do código existente, na identificação da oportunidade de refatoração relacionada ao SRP, na elaboração do método `conflita_com()`, na preparação dos testes unitários e na organização da documentação.
