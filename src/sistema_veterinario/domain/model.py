@@ -388,6 +388,37 @@ class Paciente:
     def __hash__(self):
         return hash(self.id_paciente)
 
+class PacienteFactory(ABC):
+    """Define o contrato para criação de pacientes."""
+
+    @abstractmethod
+    def criar_paciente(
+        self,
+        id_paciente: int,
+        nome: str,
+        data_nascimento: date,
+        raca_id: int
+    ) -> Paciente:
+        raise NotImplementedError
+
+
+class PacienteFactoryPadrao(PacienteFactory):
+    """Implementação padrão da fábrica de pacientes."""
+
+    def criar_paciente(
+        self,
+        id_paciente: int,
+        nome: str,
+        data_nascimento: date,
+        raca_id: int
+    ) -> Paciente:
+        return Paciente(
+            id_paciente=id_paciente,
+            nome=nome,
+            data_nascimento=data_nascimento,
+            raca_id=raca_id
+        )
+
 @dataclass
 class Cliente:
 

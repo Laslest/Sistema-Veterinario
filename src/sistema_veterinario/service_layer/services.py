@@ -1,4 +1,5 @@
-from sistema_veterinario.domain.model import Agendamento, Cliente, CPF, Disponibilidade, Paciente, Telefone, Endereco, Unidade, Veterinario
+from typing import Optional
+from sistema_veterinario.domain.model import Agendamento, Cliente, CPF, Disponibilidade, PacienteFactory, PacienteFactoryPadrao, Telefone, Endereco, Unidade, Veterinario
 
 
 def criar_agendamento(
@@ -59,13 +60,24 @@ def buscar_cliente(repository, id_cliente):
     return cliente
 
 
-def adicionar_paciente(repository, id_cliente, id_paciente, nome, data_nascimento, raca_id):
+def adicionar_paciente(
+    repository,
+    id_cliente,
+    id_paciente,
+    nome,
+    data_nascimento,
+    raca_id,
+    paciente_factory: Optional[PacienteFactory] = None,
+):
     cliente = repository.get(id_cliente)
-    
+
     if cliente is None:
         raise ValueError("Cliente não encontrado")
 
-    paciente = Paciente(
+    if paciente_factory is None:
+        paciente_factory = PacienteFactoryPadrao()
+
+    paciente = paciente_factory.criar_paciente(
         id_paciente=id_paciente,
         nome=nome,
         data_nascimento=data_nascimento,
