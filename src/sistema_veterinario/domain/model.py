@@ -141,6 +141,61 @@ class RelogioDoSistema(Relogio):
         return datetime.now()
 
 
+class EstadoAgendamento:
+
+    nome = None
+
+    def confirmar(self, agendamento):
+        raise ValueError(
+            "O agendamento não pode ser confirmado, pois não está no status AGENDADO"
+        )
+
+    def cancelar(self, agendamento):
+        raise ValueError(
+            "O agendamento não pode ser cancelado, pois não está no status AGENDADO"
+        )
+
+    def concluir(self, agendamento):
+        raise ValueError(
+            "O agendamento não pode ser concluído, pois não está no status CONFIRMADO"
+        )
+
+
+class Agendado(EstadoAgendamento):
+
+    nome = "AGENDADO"
+
+    def confirmar(self, agendamento):
+        agendamento.status = Confirmado.nome
+
+    def cancelar(self, agendamento):
+        agendamento.status = Cancelado.nome
+
+
+class Confirmado(EstadoAgendamento):
+
+    nome = "CONFIRMADO"
+
+    def concluir(self, agendamento):
+        agendamento.status = Concluido.nome
+
+
+class Cancelado(EstadoAgendamento):
+
+    nome = "CANCELADO"
+
+
+class Concluido(EstadoAgendamento):
+
+    nome = "CONCLUIDO"
+
+
+ESTADOS_AGENDAMENTO = {
+    estado.nome: estado
+    for estado in (Agendado(), Confirmado(), Cancelado(), Concluido())
+}
+
+
 class Agendamento:
 
     def __init__(
@@ -165,31 +220,20 @@ class Agendamento:
         self.id_unidade = id_unidade
         self.id_tipo_agendamento = id_tipo_agendamento
         self.data_hora = data_hora
-        self.status = "AGENDADO"
+        self.status = Agendado.nome
+
+    @property
+    def estado(self) -> EstadoAgendamento:
+        return ESTADOS_AGENDAMENTO[self.status]
 
     def confirmar(self):
-        if self.status != "AGENDADO":
-            raise ValueError(
-                "O agendamento não pode ser confirmado, pois não está no status AGENDADO"
-            )
-
-        self.status = "CONFIRMADO"
+        self.estado.confirmar(self)
 
     def cancelar(self):
-        if self.status == "AGENDADO":
-            self.status = "CANCELADO"
-        else:
-            raise ValueError(
-                "O agendamento não pode ser cancelado, pois não está no status AGENDADO"
-            )
+        self.estado.cancelar(self)
 
     def concluir(self):
-        if self.status != "CONFIRMADO":
-            raise ValueError(
-                "O agendamento não pode ser concluído, pois não está no status CONFIRMADO"
-            )
-
-        self.status = "CONCLUIDO"
+        self.estado.concluir(self)
 
 @dataclass(frozen=True)
 class CPF:
