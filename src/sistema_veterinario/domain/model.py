@@ -29,7 +29,30 @@ class Endereco:
         # Verifica se o CEP possui exatamente 8 números
         if len(self.cep) != 8 or not self.cep.isdigit():
             raise ValueError("CEP inválido")
+        
+class PoliticaAtendimento(ABC):
+    """Define a política de validação do endereço de uma unidade."""
 
+    @abstractmethod
+    def validar_endereco(self, endereco: Optional[Endereco]) -> None:
+        raise NotImplementedError
+
+
+class AtendimentoPresencial(PoliticaAtendimento):
+    """Política para unidades que realizam atendimento presencial."""
+
+    def validar_endereco(self, endereco: Optional[Endereco]) -> None:
+        if endereco is None:
+            raise ValueError(
+                "Unidade física precisa de um endereço"
+            )
+
+
+class AtendimentoDomiciliar(PoliticaAtendimento):
+    """Política para unidades que realizam atendimento domiciliar."""
+
+    def validar_endereco(self, endereco: Optional[Endereco]) -> None:
+        return None
 
 @dataclass
 class Unidade:
@@ -43,11 +66,15 @@ class Unidade:
         if not self.nome.strip():
             raise ValueError("Nome da unidade é obrigatório")
 
-        # Unidade física precisa ter endereço
-        if not self.atende_domicilio and self.endereco is None:
-            raise ValueError(
-                "Unidade física precisa de um endereço"
-            )
+        # Delega a validação do endereço à política de atendimento
+        self.politica_atendimento.validar_endereco(self.endereco)
+
+    @property
+    def politica_atendimento(self) -> PoliticaAtendimento:
+        if self.atende_domicilio:
+            return AtendimentoDomiciliar()
+
+        return AtendimentoPresencial()
 
     def __eq__(self, outra):
         if not isinstance(outra, Unidade):
@@ -56,8 +83,8 @@ class Unidade:
         return self.id_unidade == outra.id_unidade
 
     def __hash__(self):
-        return hash(self.id_unidade)
-        
+        return hash(self.id_unidade)   
+      
 class DiaSemana(Enum):
     SEGUNDA = "segunda"
     TERCA = "terca"
