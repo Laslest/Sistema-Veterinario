@@ -1726,3 +1726,48 @@ A solução introduz a possibilidade de substituir a implementação de criaçã
 #### Uso de IA generativa
 
 A ferramenta de IA generativa (ChatGPT) foi utilizada como apoio durante a escolha do padrão Factory Method, auxiliando na implementação, na elaboração dos testes e ajudou a redigir a documentação em `docs/gof.md` da minha parte, na aplicação do diagrama.
+
+## Fase 2 — Checkpoint 3
+
+### Cauã Raphael Santos de Paula
+
+#### O que fiz
+
+Neste checkpoint da Fase 2, fiquei responsável pela implementação de um padrão GoF no agregado Unidade / Local de Atendimento.
+
+Escolhi o padrão Strategy para separar as regras de validação de endereço conforme a modalidade de atendimento da unidade.
+
+Implementei a classe abstrata `PoliticaAtendimento` e as estratégias concretas `AtendimentoPresencial` e `AtendimentoDomiciliar` no arquivo `src/sistema_veterinario/domain/model.py`.
+
+A entidade `Unidade` passou a selecionar a estratégia correspondente ao atributo `atende_domicilio` e delegar a validação do endereço para ela.
+
+Também criei o arquivo `tests/unit/test_politica_atendimento.py`, contendo testes para verificar o comportamento das duas estratégias e sua seleção pela entidade.
+
+Por fim, documentei a implementação, os participantes do padrão, a alternativa considerada, o diagrama de classes e o custo de implementação em `docs/gof.md`.
+
+#### Arquivos trabalhados
+
+- `src/sistema_veterinario/domain/model.py`
+- `tests/unit/test_politica_atendimento.py`
+- `docs/gof.md`
+- `DECISIONS.md`
+
+#### Commits
+
+- `0e8991f` — `feat: aplica Strategy ao agregado Unidade`.
+- `24040c4` — `fix: arquivo test_politica_atendimento.py`.
+- `e67679c` — `docs: documenta Strategy no agregado Unidade`.
+
+#### Decisão de projeto
+
+Decidi utilizar o padrão Strategy para separar as políticas de validação de endereço das modalidades de atendimento presencial e domiciliar.
+
+Essa escolha permite que cada modalidade tenha sua própria implementação de validação, enquanto a entidade `Unidade` permanece responsável por selecionar a política correspondente.
+
+A alternativa seria manter uma condição diretamente em `Unidade.__post_init__`. O principal custo da solução escolhida é a criação de classes adicionais para uma regra que poderia ser implementada com uma condição simples. Considerei esse custo aceitável para separar os comportamentos e facilitar futuras extensões.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa (ChatGPT) como apoio na análise da aplicação do padrão Strategy ao agregado Unidade, na organização das classes, na elaboração dos testes unitários e na preparação da documentação.
+
+A implementação foi conferida com base nas regras existentes no projeto. Também utilizei o apoio da ferramenta para revisar a documentação e os testes. A execução dos comandos, a conferência dos resultados e a integração das alterações permaneceram sob minha responsabilidade.
