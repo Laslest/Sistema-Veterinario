@@ -1651,3 +1651,32 @@ O principal custo da solução foi acrescentar uma delegação entre objetos, qu
 Utilizei IA generativa (ChatGPT) como ferramenta de apoio durante este checkpoint.
 
 A ferramenta auxiliou na análise do código existente, na identificação da oportunidade de refatoração relacionada ao SRP, na elaboração do método `conflita_com()`, na preparação dos testes unitários e na organização da documentação.
+
+## Fase 2 - Checkpoint 3
+
+### Davi Gesteira dos Anjos Paula
+
+#### O que fiz
+
+Apliquei o padrão State ao ciclo de vida do agregado Agendamento. As regras de transição, que antes ficavam em `if` sobre strings dentro de `confirmar()`, `cancelar()` e `concluir()`, passaram para a classe `EstadoAgendamento` e para os estados concretos `Agendado`, `Confirmado`, `Cancelado` e `Concluido`. O `Agendamento` agora delega cada ação ao estado atual. Acrescentei testes para as transições válidas e para as 9 combinações inválidas, e documentei o padrão em `docs/gof.md`, com o diagrama de classes em Mermaid.
+
+Arquivos:
+
+- `src/sistema_veterinario/domain/model.py`
+- `tests/unit/test_estado_agendamento.py`
+- `docs/gof.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits
+
+- `c627c26` - `feat: aplica padrão State ao ciclo de vida do Agendamento` (08/11/2026)
+- `f6c2d85` - `docs: documenta padrão State de agendamento` (09/11/2026)
+- O commit `docs: registra autorrelato da fase 2 checkpoint 3` (09/11/2026) contém esta subseção.
+
+#### Decisão de projeto
+
+Decidi manter a string `status` como o valor persistido e obter o objeto de estado por um dicionário (`ESTADOS_AGENDAMENTO`), em vez de mapear os objetos de estado no ORM. Assim, a tabela e o mapeamento de `orm.py` não mudaram, e agendamentos carregados do banco, que não passam por `__init__`, funcionam com o padrão sem nenhuma conversão extra.
+
+#### Uso de IA generativa
+
+A IA generativa (Claude) sugeriu o State para o ciclo de vida do Agendamento, escreveu as classes de estado e o teste parametrizado e redigiu a seção de `docs/gof.md` com o diagrama. Li o código e o documento finais.
