@@ -121,6 +121,29 @@ class Disponibilidade:
         )
 
 
+class IteradorDisponibilidades:
+    def __init__(self, disponibilidades, dia_semana=None):
+        if dia_semana is not None and not isinstance(dia_semana, DiaSemana):
+            raise ValueError("O dia da semana deve ser um valor de DiaSemana")
+
+        self._disponibilidades = list(disponibilidades)
+        self._dia_semana = dia_semana
+        self._indice = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while self._indice < len(self._disponibilidades):
+            atual = self._disponibilidades[self._indice]
+            self._indice += 1
+
+            if self._dia_semana is None or atual.dia_semana == self._dia_semana:
+                return atual
+
+        raise StopIteration
+
+
 class Veterinario:
     def __init__(
         self,
@@ -148,12 +171,17 @@ class Veterinario:
         ):
             raise ValueError("Todos os campos são obrigatórios.")
 
+    
+    def iterar_disponibilidades(self, dia_semana=None):
+        return IteradorDisponibilidades(self.disponibilidades, dia_semana)
+
     def adicionar_disponibilidade(self, disponibilidade):
-        for existente in self.disponibilidades:
+        for existente in self.iterar_disponibilidades(disponibilidade.dia_semana):
             if disponibilidade.conflita_com(existente):
                 raise ValueError("Disponibilidade conflitante.")
 
         self.disponibilidades.append(disponibilidade)
+
 
 class Relogio(ABC):
 
