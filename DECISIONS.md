@@ -1680,3 +1680,49 @@ Decidi manter a string `status` como o valor persistido e obter o objeto de esta
 #### Uso de IA generativa
 
 A IA generativa (Claude) sugeriu o State para o ciclo de vida do Agendamento, escreveu as classes de estado e o teste parametrizado e redigiu a seção de `docs/gof.md` com o diagrama. Li o código e o documento finais.
+
+### David Pereira Ramos
+
+#### O que fiz
+
+Apliquei o padrão Factory Method à criação de pacientes no agregado Cliente/Paciente. A implementação introduziu a classe abstrata `PacienteFactory`, que define o contrato de criação, e a classe concreta `PacienteFactoryPadrao`, responsável pela instanciação padrão de `Paciente`.
+
+Antes da alteração, a função `adicionar_paciente()`, localizada em `src/sistema_veterinario/service_layer/services.py`, instanciava diretamente a classe `Paciente`. Com a aplicação do padrão, o serviço passou a solicitar a criação por meio da abstração `PacienteFactory`, utilizando `PacienteFactoryPadrao` quando nenhuma fábrica é fornecida.
+
+Também implementei a possibilidade de injetar outra implementação de fábrica pelo parâmetro opcional `paciente_factory`. A raiz `Cliente` permaneceu responsável pela associação dos pacientes, preservando as validações existentes e a regra que impede identificadores duplicados.
+
+Acrescentei testes para a criação de pacientes, para o respeito às validações da entidade e para a utilização de fábricas injetadas pela camada de serviços. Também documentei a implementação em `docs/gof.md`, incluindo a justificativa da escolha, os participantes do padrão e o diagrama de classes em Mermaid.
+
+A suíte completa de testes foi executada com sucesso, apresentando 147 testes aprovados.
+
+#### Arquivos
+
+- `src/sistema_veterinario/domain/model.py`
+- `src/sistema_veterinario/service_layer/services.py`
+- `tests/unit/test_paciente_factory.py`
+- `tests/unit/test_services_cliente.py`
+- `docs/gof.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits
+
+- `29095ca` - `feat: aplica Factory Method à criação de pacientes` (08/11/2026)
+- `88113d7` - `test: adiciona testes para Factory Method de Paciente` (08/11/2026)
+- `b05b5b6` - `docs: documenta padrão Factory Method do agregado Cliente / Paciente` (09/11/2026)
+- `9f2e1ee` - `docs: aprimora diagrama do Factory Method do agregado Cliente / Paciente` (09/11/2026)
+- O commit `docs: registra autorrelato da fase 2 checkpoint 3`(09/11/2026) contém esta subseção.
+
+
+#### Decisão de projeto
+
+Decidi definir `PacienteFactory` e `PacienteFactoryPadrao` diretamente em `src/sistema_veterinario/domain/model.py`, seguindo a organização adotada pelos demais integrantes nas implementações dos padrões GoF.
+
+Na camada de serviços, decidi receber a fábrica por meio do parâmetro opcional `paciente_factory`, utilizando `PacienteFactoryPadrao` como implementação padrão quando nenhuma fábrica é informada. Assim, as chamadas existentes de `adicionar_paciente()` continuam funcionando sem precisar fornecer explicitamente uma fábrica.
+
+Também decidi manter a responsabilidade de associação na raiz `Cliente`, em vez de transferi-la para a fábrica. Dessa maneira, o objeto criado continua passando pelo método `adicionar_paciente()`, que verifica sua validade e impede a inclusão de pacientes com identificadores duplicados.
+
+A solução introduz a possibilidade de substituir a implementação de criação sem modificar o fluxo principal do serviço. Entretanto, a implementação atual possui apenas uma fábrica concreta de produção e um único tipo concreto de produto (`Paciente`). Portanto, a substituição da fábrica está disponível na arquitetura, mas ainda não existem diferentes modalidades de criação previstas no domínio atual.
+
+#### Uso de IA generativa
+
+A ferramenta de IA generativa (ChatGPT) foi utilizada como apoio durante a escolha do padrão Factory Method, auxiliando na implementação, na elaboração dos testes e ajudou a redigir a documentação em `docs/gof.md` da minha parte, na aplicação do diagrama.
