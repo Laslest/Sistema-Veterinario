@@ -163,10 +163,18 @@ classDiagram
         +data_nascimento: date
         +raca_id: int
         +__post_init__()
+        +__eq__(outro)
+        +__hash__()
     }
 
     class Cliente {
         <<AggregateRoot>>
+        +id_cliente: int
+        +nome: str
+        +cpf: CPF
+        +telefone: Telefone
+        +pacientes: List~Paciente~
+        +__post_init__()
         +adicionar_paciente(paciente) None
         +buscar_paciente(paciente_id) Paciente
         +remover_paciente(paciente_id) None
