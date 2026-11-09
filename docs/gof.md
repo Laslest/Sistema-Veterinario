@@ -215,3 +215,98 @@ A suíte completa de testes foi executada após as alterações, apresentando o 
 A implementação também possui uma limitação: atualmente existe somente uma fábrica concreta de produção e um único tipo concreto de produto. Assim, a substituição da implementação de criação é possível, mas ainda não é utilizada para produzir diferentes tipos de pacientes no domínio atual.
 
 O custo foi aceito para separar a construção da entidade da coordenação do caso de uso, permitindo substituir a fábrica sem modificar o fluxo principal do serviço. A raiz `Cliente` permanece responsável por proteger a integridade do agregado e controlar a associação dos pacientes.
+
+## Unidade / Local de Atendimento — Cauã Raphael Santos de Paula
+
+### Padrão utilizado
+
+**Strategy (Comportamental).**
+
+### Contexto e problema
+
+A entidade `Unidade` representa locais de atendimento veterinário que podem ser físicos ou realizar atendimento domiciliar.
+
+Cada modalidade possui uma regra diferente para o endereço:
+
+- O atendimento presencial exige que a unidade possua um endereço.
+- O atendimento domiciliar permite que o endereço seja opcional.
+
+Antes da aplicação do padrão, essa validação era realizada diretamente por uma condição dentro de `Unidade.__post_init__`.
+
+### Solução implementada
+
+Foi aplicado o padrão Strategy para separar as políticas de validação de endereço de acordo com a modalidade de atendimento.
+
+Foram criadas as seguintes classes:
+
+- `PoliticaAtendimento`: classe abstrata que define o método `validar_endereco()`.
+- `AtendimentoPresencial`: exige que a unidade possua um endereço.
+- `AtendimentoDomiciliar`: permite que a unidade seja criada sem endereço.
+
+A entidade `Unidade` seleciona a estratégia de acordo com o atributo `atende_domicilio` e delega a validação do endereço para ela.
+
+### Participantes do padrão
+
+- **Contexto:** `Unidade`.
+- **Strategy:** `PoliticaAtendimento`.
+- **Concrete Strategy:** `AtendimentoPresencial`.
+- **Concrete Strategy:** `AtendimentoDomiciliar`.
+
+### Diagrama de classes
+
+```mermaid
+classDiagram
+    class PoliticaAtendimento {
+        <<abstract>>
+        +validar_endereco(endereco)*
+    }
+
+    class AtendimentoPresencial {
+        +validar_endereco(endereco)
+    }
+
+    class AtendimentoDomiciliar {
+        +validar_endereco(endereco)
+    }
+
+    class Unidade {
+        +id_unidade
+        +nome
+        +endereco
+        +atende_domicilio
+        +politica_atendimento
+        +__post_init__()
+    }
+
+    PoliticaAtendimento <|.. AtendimentoPresencial
+    PoliticaAtendimento <|.. AtendimentoDomiciliar
+    Unidade --> PoliticaAtendimento : seleciona e delega
+```
+
+### Alternativa considerada
+
+Uma alternativa seria manter a condição `if` diretamente dentro de `Unidade.__post_init__`.
+
+Essa solução seria mais simples inicialmente, mas manteria as diferentes regras de validação concentradas na entidade.
+
+A utilização do Strategy separa essas regras em implementações próprias e facilita a inclusão de novas políticas de atendimento caso o domínio passe a exigir outras modalidades.
+
+### Testes
+
+Foi criado o arquivo `tests/unit/test_politica_atendimento.py`.
+
+Os testes verificam:
+
+- Atendimento presencial rejeita endereço ausente.
+- Atendimento presencial aceita endereço informado.
+- Atendimento domiciliar aceita endereço ausente.
+- Atendimento domiciliar também aceita endereço informado.
+- A entidade `Unidade` seleciona a estratégia correspondente ao tipo de atendimento.
+
+### Custo de implementação
+
+A implementação adiciona uma classe abstrata e duas estratégias concretas, além da seleção da estratégia na entidade `Unidade`.
+
+O principal custo é a criação de classes adicionais para uma regra que anteriormente era representada por uma condição simples.
+
+Esse custo foi considerado aceitável porque permite separar as políticas de validação e facilita a extensão do comportamento sem concentrar todas as regras na entidade.
