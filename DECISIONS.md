@@ -1771,3 +1771,56 @@ A alternativa seria manter uma condição diretamente em `Unidade.__post_init__`
 Utilizei IA generativa (ChatGPT) como apoio na análise da aplicação do padrão Strategy ao agregado Unidade, na organização das classes, na elaboração dos testes unitários e na preparação da documentação.
 
 A implementação foi conferida com base nas regras existentes no projeto. Também utilizei o apoio da ferramenta para revisar a documentação e os testes. A execução dos comandos, a conferência dos resultados e a integração das alterações permaneceram sob minha responsabilidade.
+
+
+### Carlos Victor dos Santos Dantas
+
+#### O que fiz
+
+Neste checkpoint da Fase 2, implementei o padrão de projeto Iterator no agregado Veterinário, com o objetivo de organizar o acesso às disponibilidades cadastradas na agenda.
+
+Antes da alteração, a entidade `Veterinario` percorria diretamente sua lista de disponibilidades para verificar conflitos entre horários.
+
+Criei a classe `IteradorDisponibilidades`, que implementa os métodos `__iter__()` e `__next__()` e permite percorrer os horários cadastrados, com a possibilidade de filtrar os resultados por dia da semana.
+
+Também acrescentei o método `iterar_disponibilidades()` à classe `Veterinario` e atualizei `adicionar_disponibilidade()` para utilizar o novo iterador na verificação de conflitos.
+
+Com essa mudança, a responsabilidade de percorrer e filtrar os horários ficou concentrada em uma classe própria, enquanto `Veterinario` continuou responsável por gerenciar a agenda e impedir a inclusão de horários conflitantes.
+
+Criei o arquivo `tests/unit/test_iterador_disponibilidades.py`, contendo dez testes unitários para verificar o funcionamento do iterador, a filtragem por dia da semana, a independência entre iteradores e a preservação das regras de conflito.
+
+Também documentei a implementação em `docs/gof.md`, incluindo o problema identificado, a justificativa da escolha, os participantes do padrão, um diagrama de classes em Mermaid, os testes e os custos da solução.
+
+#### Arquivos trabalhados
+
+- `src/sistema_veterinario/domain/model.py`
+- `tests/unit/test_iterador_disponibilidades.py`
+- `docs/gof.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits
+
+- `0aedaaf` — `feat: implementa padrao Iterator nas disponibilidades do veterinario` (09/11/2026).
+- A documentação do Iterator e este autorrelato compõem o segundo commit do Checkpoint 3, com a mensagem `docs: documenta Iterator de veterinario no checkpoint 3`.
+
+#### Decisão de projeto
+
+Decidi utilizar o padrão Iterator para separar a lógica de percurso e filtragem das disponibilidades da entidade `Veterinario`.
+
+A alternativa considerada foi manter o percurso diretamente na lista, utilizando laços `for` e condições para verificar o dia da semana.
+
+Embora essa alternativa fosse mais simples, ela manteria a lógica de filtragem nos pontos de acesso à coleção.
+
+O Iterator permite centralizar esse comportamento e reutilizá-lo em diferentes consultas.
+
+O principal custo foi a criação de uma classe adicional e de uma cópia da lista no momento da criação do iterador, aumentando o consumo de memória proporcionalmente à quantidade de disponibilidades.
+
+Considerei esse custo aceitável pela melhoria na organização do código e pela possibilidade de testar o percurso dos horários de forma independente.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa (ChatGPT) como ferramenta de apoio durante este checkpoint.
+
+A ferramenta auxiliou na escolha do padrão Iterator, na elaboração da classe `IteradorDisponibilidades`, na integração com a entidade `Veterinario` e na preparação dos testes unitários.
+
+A revisão final, a execução dos testes e a integração das alterações ao projeto permanecem sob minha responsabilidade.

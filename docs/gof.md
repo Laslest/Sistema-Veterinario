@@ -310,3 +310,135 @@ A implementação adiciona uma classe abstrata e duas estratégias concretas, al
 O principal custo é a criação de classes adicionais para uma regra que anteriormente era representada por uma condição simples.
 
 Esse custo foi considerado aceitável porque permite separar as políticas de validação e facilita a extensão do comportamento sem concentrar todas as regras na entidade.
+
+
+## Iterator — Veterinário (Carlos Victor dos Santos Dantas)
+
+### Nome e categoria
+
+**Iterator**, padrão **comportamental**.
+
+### Contexto e problema
+
+No agregado Veterinário, a entidade `Veterinario` mantém uma coleção de disponibilidades que representa os horários em que o profissional pode realizar atendimentos.
+
+Antes da implementação do padrão, o método `adicionar_disponibilidade()` percorria diretamente essa coleção para identificar conflitos de horários.
+
+Além disso, uma consulta às disponibilidades de um dia específico exigia que o código responsável pelo acesso percorresse a lista e verificasse o dia da semana de cada intervalo.
+
+O problema identificado foi a necessidade de acessar e filtrar os horários sem depender diretamente da estrutura interna da coleção.
+
+### Solução implementada
+
+Foi aplicado o padrão Iterator para separar o percurso das disponibilidades da entidade que administra a agenda.
+
+Criei a classe `IteradorDisponibilidades`, que implementa os métodos `__iter__()` e `__next__()` do protocolo de iteração do Python.
+
+O iterador recebe a coleção de disponibilidades e permite informar um filtro opcional por dia da semana.
+
+Quando o filtro não é informado, todas as disponibilidades são percorridas. Quando um dia é especificado, somente os intervalos correspondentes são retornados.
+
+A classe `Veterinario` passou a disponibilizar o método `iterar_disponibilidades()`, responsável por criar e retornar o iterador.
+
+O método `adicionar_disponibilidade()` também foi atualizado para utilizar o iterador ao verificar conflitos no dia da nova disponibilidade.
+
+A regra de rejeitar intervalos sobrepostos foi preservada, assim como a permissão para horários consecutivos e intervalos em dias diferentes.
+
+Implementação realizada no commit `0aedaaf`, de 09/11/2026.
+
+### Por que Iterator e alternativa considerada
+
+O Iterator foi escolhido porque permite percorrer a coleção de horários utilizando uma interface específica, sem exigir que o código que realiza a consulta controle diretamente os índices da lista.
+
+Uma alternativa seria continuar utilizando um laço `for` diretamente sobre `self.disponibilidades`, incluindo uma condição para filtrar os dias da semana.
+
+Essa alternativa seria mais simples e suficiente para uma agenda pequena, mas manteria a lógica de filtragem repetida nos pontos em que fosse necessário consultar os horários.
+
+Com o Iterator, essa lógica fica concentrada em uma classe própria e pode ser reutilizada.
+
+### Participantes do padrão
+
+- **Aggregate:** `Veterinario`, que mantém a coleção de disponibilidades e oferece o método `iterar_disponibilidades()`.
+- **Iterator concreto:** `IteradorDisponibilidades`, responsável por percorrer os horários, manter a posição atual e aplicar o filtro opcional.
+- **Elemento percorrido:** `Disponibilidade`, que representa cada intervalo de horário.
+- **Filtro:** `DiaSemana`, utilizado para selecionar as disponibilidades de um dia específico.
+
+O Iterator utiliza o protocolo nativo de Python, sem necessidade de criar uma interface abstrata adicional.
+
+### Diagrama de classes
+
+```mermaid
+classDiagram
+    class Veterinario {
+        +disponibilidades
+        +iterar_disponibilidades(dia_semana)
+        +adicionar_disponibilidade(disponibilidade)
+    }
+
+    class IteradorDisponibilidades {
+        -_disponibilidades
+        -_dia_semana
+        -_indice
+        +__init__(disponibilidades, dia_semana)
+        +__iter__()
+        +__next__()
+    }
+
+    class Disponibilidade {
+        +id_disponibilidade
+        +dia_semana
+        +hora_inicio
+        +hora_fim
+        +conflita_com(outra)
+    }
+
+    class DiaSemana {
+        <<enumeration>>
+        SEGUNDA
+        TERCA
+        QUARTA
+        QUINTA
+        SEXTA
+        SABADO
+        DOMINGO
+    }
+
+    Veterinario "1" o-- "0..*" Disponibilidade : armazena
+    Veterinario ..> IteradorDisponibilidades : cria e utiliza
+    IteradorDisponibilidades ..> Disponibilidade : percorre
+    Disponibilidade --> DiaSemana : possui
+    IteradorDisponibilidades --> DiaSemana : filtra
+```
+
+### Testes
+
+Foi criado o arquivo `tests/unit/test_iterador_disponibilidades.py`, contendo dez testes unitários.
+
+Os testes verificam:
+
+- Percurso de todas as disponibilidades cadastradas.
+- Filtragem por um dia específico da semana.
+- Retorno de uma coleção vazia quando não existem horários no dia solicitado.
+- Encerramento da iteração com `StopIteration`.
+- Independência entre dois iteradores criados para a mesma coleção.
+- Preservação dos elementos disponíveis no momento da criação do iterador, mesmo após novas inclusões.
+- Rejeição de um filtro de dia da semana inválido.
+- Rejeição de disponibilidades com horários conflitantes.
+- Aceitação de horários consecutivos.
+- Aceitação de horários sobrepostos em dias diferentes.
+
+Os testes também verificam a integração do Iterator com `Veterinario.adicionar_disponibilidade()`, garantindo que a regra de conflitos continue sendo aplicada.
+
+### Custo de implementação
+
+A implementação acrescentou a classe `IteradorDisponibilidades` e um método de acesso na entidade `Veterinario`.
+
+O iterador também mantém um índice próprio e cria uma cópia da lista de disponibilidades no momento de sua construção.
+
+Essa cópia permite que novas inclusões não alterem o conjunto percorrido por um iterador já criado, mas possui custo de memória proporcional à quantidade de elementos.
+
+A cópia é superficial, portanto os objetos `Disponibilidade` continuam compartilhados e podem ser modificados diretamente.
+
+Outra limitação é que a coleção original continua pública, não existindo um encapsulamento completo das disponibilidades.
+
+Considerei o custo aceitável porque o padrão separa a responsabilidade de percorrer os horários, permite reutilizar a filtragem e facilita os testes dessa funcionalidade, sem alterar a persistência ou as demais camadas do sistema.
