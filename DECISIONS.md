@@ -1824,3 +1824,36 @@ Utilizei IA generativa (ChatGPT) como ferramenta de apoio durante este checkpoin
 A ferramenta auxiliou na escolha do padrão Iterator, na elaboração da classe `IteradorDisponibilidades`, na integração com a entidade `Veterinario` e na preparação dos testes unitários.
 
 A revisão final, a execução dos testes e a integração das alterações ao projeto permanecem sob minha responsabilidade.
+
+## Fase 2 - Entrega Final
+
+### Davi Gesteira dos Anjos Paula
+
+#### O que fiz
+
+Escrevi `docs/frameworks.md`, com o papel do Flask, do SQLAlchemy e do pytest em cada camada, três pontos de inversão de controle (registro de rotas, fixtures do pytest e criação de objetos pelo ORM) e cinco padrões internos localizados no código do grupo (Data Mapper, Unit of Work, Identity Map, Factory e Proxy). Antes de afirmar dois deles, verifiquei no próprio sistema que o SQLAlchemy carrega um `Agendamento` sem chamar `__init__` e que `session.get` devolve o mesmo objeto na mesma sessão.
+
+Escrevi também `docs/retrospectiva.md`, que compara as previsões do checkpoint 1 com o que aconteceu na Fase 2, usando os arquivos alterados por cada commit de SOLID e GoF dos quatro integrantes e a evolução da suíte (103, 120 e 157 testes nas três tags).
+
+Arquivos:
+
+- `docs/frameworks.md`
+- `docs/retrospectiva.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits
+
+- `226fa9c` - `docs: adiciona análise dos frameworks` (13/11/2026)
+- O commit `docs: adiciona retrospectiva e autorrelato da entrega final` (15/11/2026) contém `docs/retrospectiva.md` e esta subseção.
+
+#### Decisão de projeto
+
+Na retrospectiva, defendi manter as camadas em vez de uma solução híbrida com Active Record para os agregados mais simples. A justificativa é que nenhuma das oito mudanças de código de produção da Fase 2 precisou alterar mais de duas camadas, e até a Unidade, que parecia o agregado mais simples, recebeu um padrão Strategy no domínio.
+
+#### Uso de IA generativa
+
+Usei o Claude para levantar no repositório os pontos de uso de cada framework e os arquivos alterados por commit, para executar as verificações do ORM.
+
+#### Reflexão
+
+A Fase 2 mudou a forma como eu olho para o código que eu mesmo escrevi na Fase 1. Ao documentar a arquitetura, percebi que decisões que pareciam naturais, como deixar a regra de status dentro do `Agendamento`, tinham custos que eu não tinha medido, e que algumas suposições não se sustentavam: os testes e2e que eu achava que cobriam erros só testavam os casos de sucesso. A refatoração de DIP me mostrou que uma violação de SOLID pode ser bem concreta: a mesma requisição era aceita ou recusada dependendo do fuso do servidor. Já o padrão State me ensinou que um padrão do livro precisa se adaptar ao resto do sistema, porque o ORM cria os objetos sem passar pelo construtor. O que eu mais aprendi foi a sustentar uma afirmação com evidência do repositório, como um hash, uma contagem ou um teste, em vez de apenas descrever a intenção. Faria diferente em dois pontos: começaria cada checkpoint mais cedo, porque vários dos meus commits ficaram a poucos dias do prazo, e corrigiria logo os riscos que eu mesmo apontei no checkpoint 1, como as versões sem fixar no `requirements.txt` e a comparação por texto de exceções, que chegaram abertos até a entrega final.
