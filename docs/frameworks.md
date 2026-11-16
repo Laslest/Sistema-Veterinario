@@ -198,3 +198,80 @@ Por outro lado, as colunas relacionadas ao endereço são anuláveis no banco de
 Além disso, o teste de integração atual não limpa a sessão antes de recuperar a unidade, utilizando a mesma sessão após a persistência. Um teste adicional com `session.expunge_all()` poderia verificar de forma mais isolada a reconstrução do objeto `Endereco` a partir dos dados armazenados.
 
 Considero essa solução adequada ao sistema atual, pois mantém o modelo de persistência simples, evita a criação de uma entidade desnecessária e preserva a regra que diferencia unidades físicas de unidades domiciliares.
+
+## 7. Cliente/Paciente — composite e relationship
+
+### Mapeamento dos objetos de valor com composite
+
+No agregado Cliente/Paciente, o SQLAlchemy utiliza `composite()` para mapear os objetos de valor `CPF` e `Telefone` às colunas correspondentes da tabela `clientes`.
+
+A tabela `clientes`, definida em `src/sistema_veterinario/adapters/orm.py`, possui as colunas `cpf_numero` e `telefone_numero`, responsáveis por armazenar os respectivos números.
+
+O mapeamento é realizado em `start_mappers()`:
+
+```python
+mapper_registry.map_imperatively(
+    Cliente,
+    clientes,
+    properties={
+        "cpf": composite(CPF, clientes.c.cpf_numero),
+        "telefone": composite(
+            Telefone,
+            clientes.c.telefone_numero,
+        ),
+        "pacientes": relationship(Paciente),
+    },
+)
+```
+
+O uso de `composite()` permite que os valores armazenados nas colunas sejam representados como instâncias das classes `CPF` e `Telefone` na aplicação.
+
+Na camada de domínio, ambas são definidas como objetos de valor imutáveis (`dataclass(frozen=True)`), possuem o atributo `numero` e implementam suas próprias validações.
+
+Assim, o SQLAlchemy realiza a conversão entre as colunas do banco de dados e os objetos utilizados pelo domínio, sem que essas classes precisem conhecer os detalhes do ORM.
+
+### Mapeamento da coleção de pacientes com relationship
+
+A associação entre `Cliente` e `Paciente` é realizada por meio de `relationship()`. Na tabela `pacientes`, a coluna `id_cliente` funciona como chave estrangeira para `clientes.id_cliente`.
+
+O relacionamento é configurado no mapeamento da classe `Cliente`:
+
+```python
+"pacientes": relationship(Paciente)
+```
+
+Essa configuração permite que o SQLAlchemy associe os registros de pacientes ao respectivo cliente e disponibilize essa associação por meio da coleção `cliente.pacientes`.
+
+No domínio, a classe `Cliente` já possui essa coleção e disponibiliza os métodos `adicionar_paciente()`, `buscar_paciente()` e `remover_paciente()`. Além disso, o método de adição impede que dois pacientes com o mesmo identificador sejam incluídos na coleção.
+
+Diferentemente do relacionamento utilizado no agregado Veterinário, esse mapeamento não declara explicitamente configurações de `cascade`.
+
+### Relação com a arquitetura do projeto
+
+Os mapeamentos de `CPF`, `Telefone` e `Paciente` são definidos externamente, no arquivo `adapters/orm.py`, utilizando `map_imperatively()`.
+
+Dessa maneira, as classes `Cliente`, `Paciente`, `CPF` e `Telefone`, localizadas em `domain/model.py`, não precisam importar SQLAlchemy ou herdar de classes do framework.
+
+O domínio permanece responsável pelas regras de negócio, incluindo as validações dos objetos de valor e o controle da coleção de pacientes. Já o adaptador de persistência define como essas estruturas são relacionadas às tabelas do banco de dados.
+
+Essa organização mantém a separação entre as regras de negócio e os detalhes de infraestrutura.
+
+### Evidência no repositório
+
+O arquivo `tests/integration/test_repository_cliente.py` contém testes que verificam o funcionamento dos mapeamentos utilizando um banco SQLite em memória.
+
+No teste `test_repository_salva_e_busca_cliente()`, um cliente é persistido e posteriormente recuperado após a limpeza da sessão com `session.expunge_all()`. As verificações confirmam que os atributos `cpf` e `telefone` continuam sendo instâncias das respectivas classes e preservam seus números.
+
+No teste `test_repository_salva_cliente_com_paciente()`, um paciente é associado ao cliente por meio de `adicionar_paciente()`. Após a persistência e recuperação do cliente, o teste verifica se a coleção contém o paciente e se seus atributos foram preservados.
+
+Esses testes demonstram que os objetos de valor e a associação entre cliente e paciente são reconstruídos corretamente durante a recuperação dos dados.
+
+### Benefícios e limitações
+
+O uso de `composite()` permite trabalhar com objetos de valor no domínio, mantendo suas validações centralizadas nas respectivas classes, enquanto os dados permanecem armazenados em colunas do banco.
+
+O `relationship()` facilita o acesso à coleção de pacientes associados a um cliente, evitando que a aplicação precise implementar manualmente essa associação em cada consulta.
+
+Além disso, a definição externa dos mapeamentos mantém as classes do domínio independentes do SQLAlchemy, permitindo que os testes unitários trabalhem com essas classes sem depender de um banco de dados.
+
+Por outro lado, o relacionamento atual não define explicitamente opções de `cascade` nem configura uma associação bidirecional com `back_populates`. Portanto, o gerenciamento da persistência e da exclusão de pacientes relacionados deve considerar as configurações efetivamente declaradas no ORM.
