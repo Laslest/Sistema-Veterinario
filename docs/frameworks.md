@@ -35,3 +35,80 @@ Usar uma **biblioteca** é chamar o código dela quando o nosso código decide: 
 - **Entrada:** as rotas de `flask_app.py` virariam views registradas em `urls.py`, com o tratamento de requisição e transação dado pelo framework.
 - **Testes:** a maioria dos testes de modelo usaria o banco de testes do Django (`django.test.TestCase`), e os repositórios falsos perderiam o sentido. Os testes unitários ficariam mais lentos e acoplados ao banco.
 - **Ganhos:** painel administrativo, migrações, autenticação e validação de formulários prontos, com bem menos código de infraestrutura para escrever.
+
+
+## 5. Veterinário — relationship e cascade das disponibilidades
+
+### Relacionamento no SQLAlchemy
+
+No agregado Veterinário, a entidade `Veterinario` possui uma coleção de disponibilidades, que representa os dias e horários em que o profissional pode realizar atendimentos.
+
+O relacionamento entre `Veterinario` e `Disponibilidade` é configurado pelo SQLAlchemy no arquivo `src/sistema_veterinario/adapters/orm.py`.
+
+A tabela `disponibilidades` possui a coluna `id_veterinario`, que funciona como chave estrangeira para a tabela `veterinarios`.
+
+O mapeamento é definido em `start_mappers()`:
+
+```python
+if inspect(Veterinario, raiseerr=False) is None:
+    mapper_registry.map_imperatively(
+        Veterinario,
+        veterinarios,
+        properties={
+            "disponibilidades": relationship(
+                Disponibilidade,
+                cascade="all, delete-orphan",
+            ),
+        },
+    )
+```
+
+O método `relationship()` permite que o SQLAlchemy associe as disponibilidades ao veterinário correspondente. Dessa forma, o código pode trabalhar com a coleção `veterinario.disponibilidades`, sem precisar executar manualmente uma consulta para cada associação.
+
+Esse relacionamento representa uma associação de um veterinário para várias disponibilidades.
+
+### Funcionamento do cascade
+
+A configuração `cascade="all, delete-orphan"` define como o SQLAlchemy gerencia os objetos associados durante as operações de persistência.
+
+O parâmetro `all` inclui operações como salvar, atualizar e excluir objetos relacionados. Assim, ao adicionar um veterinário à sessão, suas disponibilidades associadas também podem ser persistidas.
+
+O `delete-orphan` determina que uma disponibilidade removida da coleção do veterinário seja excluída do banco quando a sessão sincronizar as alterações.
+
+A configuração também permite que, ao excluir um veterinário por meio da sessão ORM, suas disponibilidades relacionadas sejam excluídas.
+
+Esse comportamento é gerenciado pelo SQLAlchemy. Não se trata de um `ON DELETE CASCADE` definido diretamente na chave estrangeira do banco.
+
+### Relação com a arquitetura do projeto
+
+O uso de `relationship()` e `cascade` mantém os detalhes da persistência na camada de infraestrutura.
+
+A classe `Veterinario`, em `domain/model.py`, não precisa importar SQLAlchemy para controlar suas disponibilidades. Ela continua responsável pelas regras de negócio, como impedir a inclusão de intervalos conflitantes.
+
+Já o SQLAlchemy cuida da associação entre as tabelas e do acompanhamento das alterações realizadas nos objetos durante a sessão.
+
+Essa separação facilita os testes unitários do domínio, que podem trabalhar com objetos `Veterinario` e `Disponibilidade` sem depender de um banco de dados.
+
+### Evidência no repositório
+
+O arquivo `tests/integration/test_repository_veterinario.py` contém o teste `test_repository_salva_e_busca_veterinario()`.
+
+Nesse teste, uma disponibilidade é adicionada ao veterinário, o objeto é salvo utilizando o repositório SQLAlchemy e a transação é confirmada com `session.commit()`.
+
+Depois, o teste limpa os objetos da sessão com `session.expunge_all()` e recupera o veterinário pelo repositório.
+
+As verificações confirmam que a disponibilidade foi persistida e recuperada com seu identificador, dia da semana e horários.
+
+Esse teste demonstra o funcionamento da associação na persistência. Ele não verifica diretamente a exclusão em cascata ou a remoção de objetos órfãos.
+
+### Benefícios e limitações
+
+O principal benefício desse mapeamento é evitar a implementação manual de operações de persistência para cada disponibilidade associada ao veterinário.
+
+A configuração também mantém as classes de domínio independentes do SQLAlchemy, seguindo a arquitetura em camadas adotada pelo grupo.
+
+Por outro lado, o uso de `cascade` exige atenção. A remoção de um objeto da coleção pode provocar sua exclusão no banco de dados, mesmo que a intenção inicial tenha sido apenas alterar a associação.
+
+Além disso, a coleção `disponibilidades` continua pública e pode ser modificada diretamente, sem passar pelas validações realizadas no método `adicionar_disponibilidade()`.
+
+Por isso, considero a configuração adequada para o sistema atual, mas o comportamento de exclusão e o encapsulamento da coleção merecem atenção caso o sistema evolua.
