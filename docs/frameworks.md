@@ -112,3 +112,89 @@ Por outro lado, o uso de `cascade` exige atenção. A remoção de um objeto da 
 Além disso, a coleção `disponibilidades` continua pública e pode ser modificada diretamente, sem passar pelas validações realizadas no método `adicionar_disponibilidade()`.
 
 Por isso, considero a configuração adequada para o sistema atual, mas o comportamento de exclusão e o encapsulamento da coleção merecem atenção caso o sistema evolua.
+
+## 6. Unidade — composite e return_none_on do Endereco
+
+### Mapeamento do objeto de valor no SQLAlchemy
+
+No agregado Unidade, o objeto de valor `Endereco` representa as informações de localização de uma unidade de atendimento. Ele é composto pelos atributos `rua`, `numero`, `bairro`, `cidade`, `estado` e `cep`.
+
+O mapeamento entre `Unidade` e a tabela `unidades` é configurado pelo SQLAlchemy no arquivo `src/sistema_veterinario/adapters/orm.py`, utilizando `map_imperatively()` dentro de `start_mappers()`.
+
+Diferentemente de uma entidade com tabela própria, o endereço é armazenado diretamente na tabela `unidades`, por meio de seis colunas correspondentes aos seus atributos.
+
+O mapeamento utiliza o recurso `composite()`:
+
+```python
+if inspect(Unidade, raiseerr=False) is None:
+    mapper_registry.map_imperatively(
+        Unidade,
+        unidades,
+        properties={
+            "endereco": composite(
+                Endereco,
+                unidades.c.rua,
+                unidades.c.numero,
+                unidades.c.bairro,
+                unidades.c.cidade,
+                unidades.c.estado,
+                unidades.c.cep,
+                return_none_on=lambda *campos: all(
+                    campo is None for campo in campos
+                ),
+            ),
+        },
+    )
+```
+
+O método `composite()` permite agrupar várias colunas da tabela em um único objeto de valor. Dessa forma, quando uma unidade é recuperada pelo SQLAlchemy, os valores armazenados nas colunas do endereço são utilizados para representar uma instância de `Endereco`.
+
+### Funcionamento do composite e return_none_on
+
+A utilização de `composite()` permite manter o endereço como parte da entidade `Unidade`, sem a necessidade de criar uma tabela ou um repositório específico para ele.
+
+Entretanto, o sistema permite cadastrar unidades que realizam atendimento exclusivamente domiciliar sem possuir um endereço físico. Por isso, o mapeamento precisa tratar a possibilidade de todas as colunas do endereço estarem nulas.
+
+Para resolver essa situação, foi utilizado o parâmetro `return_none_on`.
+
+A função verifica se todos os campos recebidos estão com valor `None`. Quando essa condição é verdadeira, o SQLAlchemy representa o atributo `endereco` como `None`, em vez de criar um objeto `Endereco` com todos os atributos nulos.
+
+Esse comportamento permite preservar a regra do domínio: unidades que realizam atendimento presencial precisam obrigatoriamente de endereço, enquanto unidades que realizam atendimento domiciliar podem ser cadastradas sem ele.
+
+### Relação com a arquitetura do projeto
+
+O uso de `composite()` mantém os detalhes de persistência na camada de infraestrutura.
+
+A classe `Endereco`, localizada em `domain/model.py`, é definida como um objeto de valor imutável utilizando `@dataclass(frozen=True)`. Ela possui validações próprias para os campos de rua, cidade, estado e CEP.
+
+Já a entidade `Unidade` permanece responsável pelas regras relacionadas ao tipo de atendimento. A validação é delegada às políticas `AtendimentoPresencial` e `AtendimentoDomiciliar`, que determinam se o endereço pode ou não ser ausente.
+
+O domínio não precisa importar ou conhecer o SQLAlchemy para representar essas regras. O framework é utilizado apenas na camada de adapters, responsável por converter os dados entre os objetos do domínio e as tabelas do banco.
+
+Essa separação permite testar as regras de negócio independentemente da infraestrutura de persistência.
+
+### Evidência no repositório
+
+O arquivo `tests/integration/test_repository_unidade.py` contém o teste `test_repository_salva_e_busca_unidade()`.
+
+Nesse teste, uma unidade com endereço é criada, adicionada ao `SqlAlchemyUnidadeRepository` e persistida utilizando SQLite em memória. Em seguida, são verificadas as informações recuperadas, incluindo os atributos de rua e CEP.
+
+O arquivo `tests/e2e/test_unidade_api.py` também contém testes relacionados ao comportamento do endereço pela API.
+
+O teste `test_api_cadastra_unidade_com_endereco()` verifica o cadastro de uma unidade com endereço informado. Já o teste `test_api_cadastra_unidade_domiciliar_sem_endereco()` verifica o cadastro de uma unidade domiciliar com `endereco: None` e sua posterior consulta pela API.
+
+Além disso, o arquivo `tests/unit/test_unidade_endereco.py` contém o teste `test_unidade_fisica_sem_endereco_gera_erro()`, que verifica se uma unidade física é impedida de ser criada sem endereço.
+
+### Benefícios e limitações
+
+O principal benefício dessa abordagem é permitir que o endereço seja representado como um objeto de valor dentro da entidade `Unidade`, sem acrescentar uma tabela ou operações de persistência desnecessárias.
+
+O uso de `return_none_on` também permite representar corretamente a ausência de endereço no banco, mantendo o comportamento esperado para unidades domiciliares.
+
+Outro benefício é a separação entre domínio e infraestrutura, pois as regras de validação permanecem nas classes do domínio, enquanto o SQLAlchemy fica responsável pelo mapeamento e pela persistência.
+
+Por outro lado, as colunas relacionadas ao endereço são anuláveis no banco de dados. Isso significa que uma inserção realizada diretamente no banco poderia cadastrar uma unidade física sem endereço, ignorando as validações do domínio.
+
+Além disso, o teste de integração atual não limpa a sessão antes de recuperar a unidade, utilizando a mesma sessão após a persistência. Um teste adicional com `session.expunge_all()` poderia verificar de forma mais isolada a reconstrução do objeto `Endereco` a partir dos dados armazenados.
+
+Considero essa solução adequada ao sistema atual, pois mantém o modelo de persistência simples, evita a criação de uma entidade desnecessária e preserva a regra que diferencia unidades físicas de unidades domiciliares.
