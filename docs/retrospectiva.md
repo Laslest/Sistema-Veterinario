@@ -66,6 +66,26 @@ O custo dessas decisões também deve ser considerado. A extração do serializa
 
 Assim, o caso de Unidade contraria a expectativa de que agregados próximos de CRUD necessariamente se beneficiariam menos da arquitetura em camadas. A quantidade de operações não é suficiente para determinar a complexidade de um agregado: suas regras de negócio, responsabilidades e possibilidades de evolução também precisam ser consideradas.
 
+### Análise do agregado Cliente/Paciente
+
+No agregado Cliente/Paciente, as alterações realizadas na Fase 2 envolveram a aplicação do princípio da Substituição de Liskov (LSP) e do padrão Factory Method. As duas mudanças demonstraram como a arquitetura em camadas permite organizar responsabilidades diferentes sem concentrar toda a lógica em uma única parte do sistema.
+
+A primeira alteração foi a formalização do contrato do repositório de Cliente, no commit `53715cc`. Antes dessa refatoração, não havia um contrato específico para esse agregado que estabelecesse o comportamento esperado das implementações. Com a criação da abstração `ClienteRepository`, tanto `FakeClienteRepository` quanto `SqlAlchemyClienteRepository` passaram a implementar o mesmo contrato, incluindo as operações de adicionar e buscar clientes. Também foi estabelecida a regra de que um cliente existente não pode ser substituído por outro com o mesmo identificador, utilizando `ClienteJaCadastradoError` para representar essa situação.
+
+Essa mudança evidenciou a importância da separação entre a camada de serviços e os detalhes de persistência. Os serviços recebem o repositório como dependência, sem precisar conhecer qual implementação está sendo utilizada. Os testes verificam separadamente o comportamento do repositório falso e do repositório SQLAlchemy, incluindo a busca de clientes inexistentes e a rejeição de identificadores duplicados. Na camada de entrada, o Flask trata o conflito e retorna HTTP 409, mantendo a responsabilidade de traduzir os erros para respostas da API.
+
+A segunda alteração foi a aplicação do padrão Factory Method à criação de pacientes, no commit `29095ca`. Antes, o serviço de adição de pacientes instanciava diretamente a classe `Paciente`. Com a refatoração, foram introduzidas a abstração `PacienteFactory` e sua implementação concreta `PacienteFactoryPadrao`, responsáveis por definir e realizar a criação do paciente.
+
+A função `adicionar_paciente()`, na camada de serviços, passou a receber uma fábrica opcional por meio do parâmetro `paciente_factory`, utilizando `PacienteFactoryPadrao` quando nenhuma implementação é fornecida. Dessa forma, o serviço depende da abstração de criação, permitindo a substituição da fábrica sem modificar o fluxo principal do caso de uso. Entretanto, a responsabilidade de associar o paciente ao cliente permaneceu no agregado `Cliente`, que continua verificando as regras de negócio, como a proibição de pacientes com identificadores duplicados.
+
+Os testes acrescentados verificam tanto a criação de pacientes e o respeito às validações da entidade quanto a utilização de uma fábrica injetada no serviço. Isso permitiu conferir que a criação foi delegada à abstração sem retirar do agregado a responsabilidade de controlar sua coleção de pacientes.
+
+As duas alterações trouxeram benefícios distintos para a organização do sistema. O LSP tornou explícito o contrato de persistência do agregado Cliente/Paciente, permitindo utilizar implementações diferentes sem alterar a lógica dos serviços. Já o Factory Method separou a responsabilidade de criação do paciente da coordenação do caso de uso. Em ambos os casos, as mudanças ficaram concentradas nas camadas necessárias, sem exigir uma reestruturação completa da arquitetura.
+
+O custo dessas decisões também deve ser considerado. A formalização do contrato tornou a implementação do repositório mais explícita e exigiu tratamento específico da exceção na camada de entrada. O Factory Method acrescentou duas classes e um parâmetro opcional ao serviço, embora atualmente exista apenas uma fábrica concreta de produção e um único tipo concreto de produto (`Paciente`). Portanto, a flexibilidade para substituir a criação foi introduzida, mas ainda não existem diferentes modalidades de pacientes previstas no domínio atual.
+
+Assim, a experiência com Cliente/Paciente reforçou a decisão de manter a arquitetura em camadas. O LSP demonstrou a importância de contratos consistentes entre as implementações de persistência, enquanto o Factory Method mostrou que a criação de objetos pode ser flexibilizada sem comprometer as responsabilidades do domínio.
+
 As camadas atrapalharam em dois pontos:
 
 - **Composição na entrada:** `flask_app.py` cria engine, sessão e repositórios, e `app = create_app()` na importação gera `sistema_veterinario.db` a cada execução dos e2e, o que levou ao `.db` commitado em `f8d4215` e removido em `b5fd88d`.

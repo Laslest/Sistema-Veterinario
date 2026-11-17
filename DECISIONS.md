@@ -1967,3 +1967,58 @@ Com o Iterator, entendi melhor a diferença entre ter uma lista disponível e of
 Na análise final do SQLAlchemy, também ficou mais clara a vantagem de manter o mapeamento em `adapters/orm.py`: pude mudar regras e percurso no domínio sem alterar tabelas ou repositórios. Em compensação, a coleção pública de disponibilidades ainda permite alterações diretas, e o comportamento de exclusão em cascata merece testes específicos.
 
 Hoje eu manteria a arquitetura em camadas. Se recomeçasse o projeto, definiria antes como proteger a coleção de disponibilidades, acrescentaria testes para o `delete-orphan` e procuraria documentar as decisões no momento em que fossem tomadas, em vez de deixar parte dessa análise para os checkpoints.
+
+### David Pereira Ramos
+
+#### O que fiz
+
+Na entrega final da Fase 2, contribuí para a documentação dos frameworks e para a retrospectiva da arquitetura, mantendo o foco no agregado Cliente/Paciente.
+
+No arquivo `docs/frameworks.md`, documentei como o SQLAlchemy utiliza `composite()` para mapear os objetos de valor `CPF` e `Telefone` e `relationship()` para representar a associação entre `Cliente` e sua coleção de `Paciente`.
+
+Também expliquei como esses mapeamentos mantêm os detalhes de persistência na camada de infraestrutura, sem exigir dependências do SQLAlchemy nas classes do domínio. Para complementar a análise, utilizei os testes de integração que verificam a persistência e a recuperação dos objetos de valor e dos pacientes associados ao cliente.
+
+Em `docs/retrospectiva.md`, contribuí com a análise das alterações de LSP e Factory Method no agregado Cliente/Paciente, relacionando essas implementações à separação de responsabilidades entre domínio, serviços, repositórios e entrada HTTP.
+
+A análise considera como a formalização do contrato `ClienteRepository` permitiu utilizar implementações diferentes de repositório e como o Factory Method separou a criação de pacientes da coordenação do caso de uso, mantendo a associação sob responsabilidade da raiz `Cliente`.
+
+#### Arquivos trabalhados
+
+- `docs/frameworks.md`
+- `docs/retrospectiva.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits
+
+- `def9408` — `docs: documenta mapeamento SQLAlchemy de Cliente/Paciente` (15/11/2026).
+- A análise da retrospectiva e este autorrelato integram o segundo commit da entrega final, com a mensagem `docs: adiciona retrospectiva do agregado Cliente / Paciente e autorrelato final`.
+
+Como evidências das implementações analisadas, também considerei os commits `53715cc` e `f8d4215`, referentes à refatoração LSP, e `29095ca` e `88113d7`, referentes à implementação e aos testes do Factory Method.
+
+#### Decisão de projeto
+
+Decidi manter a documentação do mapeamento de Cliente/Paciente concentrada em `docs/frameworks.md`, destacando a utilização de `composite()` e `relationship()` e a separação entre domínio e persistência.
+
+Na retrospectiva, considerei importante analisar os efeitos das duas implementações sobre a arquitetura em camadas, em vez de avaliar apenas a aplicação dos princípios e padrões isoladamente.
+
+A refatoração LSP demonstrou a importância de contratos consistentes entre as implementações de repositório. Já o Factory Method mostrou que a responsabilidade de criação pode ser separada da camada de serviços sem retirar do agregado `Cliente` o controle sobre seus pacientes.
+
+Essas experiências reforçaram minha decisão de manter a arquitetura em camadas, pois as alterações ficaram concentradas nas responsabilidades necessárias, sem exigir mudanças generalizadas no sistema.
+
+#### Uso de IA generativa
+
+Utilizei ChatGPT como ferramenta de apoio durante a análise dos mapeamentos do SQLAlchemy, a interpretação dos testes de integração e a elaboração das contribuições para `docs/frameworks.md` e `docs/retrospectiva.md`.
+
+A ferramenta também auxiliou na organização da escrita e na revisão da coerência entre as explicações e a implementação existente.
+
+A conferência dos arquivos, a avaliação das sugestões, as decisões sobre o conteúdo final e a realização dos commits permaneceram sob minha responsabilidade.
+
+#### Reflexão individual
+
+A Fase 2 me permitiu compreender melhor como a separação de responsabilidades influencia a manutenção do sistema. Na refatoração LSP, percebi que não basta ter um repositório falso e outro conectado ao banco: ambos precisam respeitar o mesmo contrato e apresentar comportamentos compatíveis. O tratamento de clientes duplicados foi um exemplo concreto dessa necessidade.
+
+Com o Factory Method, compreendi melhor a diferença entre criar um objeto e controlar sua participação no agregado. A fábrica ficou responsável pela criação de `Paciente`, o serviço pela coordenação do caso de uso e `Cliente` pela associação e pelas regras de sua coleção.
+
+Na entrega final, ao analisar `composite()` e `relationship()`, também percebi como o SQLAlchemy consegue mapear objetos de valor e associações sem tornar o domínio dependente do ORM.
+
+Manteria a arquitetura em camadas, pois as implementações demonstraram que mudanças específicas puderam ser realizadas sem reestruturar todo o sistema. Como aprendizado, considero importante documentar não apenas o que foi implementado, mas também os motivos das decisões e os custos envolvidos.
