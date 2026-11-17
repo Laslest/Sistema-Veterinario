@@ -17,8 +17,6 @@
 
 O trade-off que mais pesou foi **separação × simplicidade**, a favor da separação: o custo apareceu na quantidade de classes (o State distribuiu a lógica de três métodos em cinco classes), não na dificuldade das mudanças.
 
-
-
 ## 2. As camadas ajudaram ou atrapalharam?
 
 Ajudaram. Arquivos de produção alterados por commit da Fase 2 (sem os testes):
@@ -35,6 +33,20 @@ Ajudaram. Arquivos de produção alterados por commit da Fase 2 (sem os testes):
 | `0aedaaf` | Iterator em Veterinário | `domain/model.py` |
 
 Nenhuma mudança tocou mais de duas camadas, e os padrões GoF ficaram no domínio. Com Active Record, a mesma classe teria regra, colunas e consultas, e cada padrão exigiria testes com banco.
+
+### Análise do agregado Veterinário
+
+No agregado Veterinário, as alterações da Fase 2 reforçaram a decisão de manter a arquitetura em camadas.
+
+A primeira mudança foi a refatoração de Responsabilidade Única (SRP), no commit `86c5816`. Antes, `Veterinario.adicionar_disponibilidade()` verificava diretamente a sobreposição dos horários. Com a refatoração, essa comparação passou para `Disponibilidade.conflita_com()`, enquanto `Veterinario` continuou responsável por controlar a inclusão na agenda.
+
+A segunda mudança foi a implementação do padrão Iterator, no commit `0aedaaf`. A classe `IteradorDisponibilidades` passou a concentrar o percurso e a filtragem dos horários por dia da semana, permitindo reutilizar esse comportamento.
+
+Ambas as alterações ficaram na camada de domínio, sem exigir mudanças no SQLAlchemy, nos repositórios ou nos endpoints Flask. Isso confirmou a vantagem da separação entre regras de negócio e persistência.
+
+O principal custo foi acrescentar métodos e uma classe ao domínio. Além disso, a coleção pública de disponibilidades ainda permite modificações diretas, sem passar pela validação de conflitos.
+
+Portanto, manteríamos a arquitetura em camadas, mas consideraríamos melhorar o encapsulamento das disponibilidades para proteger as regras do agregado.
 
 ### Análise do agregado Unidade
 

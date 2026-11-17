@@ -1905,3 +1905,65 @@ A elaboração da retrospectiva permitiu perceber que a simplicidade aparente de
 Também ficou mais claro que a aplicação de princípios e padrões de projeto precisa estar relacionada a problemas concretos do código. O SRP e o Strategy acrescentaram componentes à implementação, mas resolveram questões diferentes e contribuíram para manter cada responsabilidade em seu local adequado.
 
 Como aprendizado, considero importante avaliar não apenas se uma implementação funciona, mas também como suas responsabilidades estão organizadas e quais seriam os impactos de futuras alterações. A retrospectiva ajudou a relacionar as decisões tomadas durante o desenvolvimento com os resultados observados na arquitetura final.
+
+
+### Carlos Victor dos Santos Dantas
+
+#### O que fiz
+
+Na entrega final da Fase 2, contribuí para a análise dos frameworks e para a retrospectiva da arquitetura, com foco no agregado Veterinário.
+
+No arquivo `docs/frameworks.md`, analisei como o SQLAlchemy utiliza `relationship()` e `cascade="all, delete-orphan"` para gerenciar a associação entre `Veterinario` e suas disponibilidades.
+
+Expliquei como esse mapeamento permite trabalhar com a coleção de horários no domínio sem depender diretamente do SQLAlchemy, mantendo os detalhes de persistência em `adapters/orm.py`.
+
+Também identifiquei os benefícios e as limitações dessa configuração, incluindo o comportamento de exclusão das disponibilidades e a possibilidade de modificações diretas na coleção.
+
+Em `docs/retrospectiva.md`, analisei as contribuições realizadas nos checkpoints anteriores: a refatoração de SRP e a implementação do padrão Iterator.
+
+Relacionei essas alterações aos benefícios da arquitetura em camadas, principalmente à possibilidade de modificar regras e comportamentos do domínio sem alterar os repositórios ou o mapeamento ORM.
+
+Também considerei os custos das mudanças e as limitações que ainda permanecem no agregado.
+
+#### Arquivos trabalhados
+
+- `docs/frameworks.md`
+- `docs/retrospectiva.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits
+
+- `e05c775` — `docs: analisa relationship e cascade de disponibilidades no SQLAlchemy` (15/11/2026).
+- A análise da retrospectiva e este autorrelato integram o segundo commit da entrega final, com a mensagem `docs: conclui retrospectiva de veterinario e autorrelato final`.
+
+Como evidências das mudanças analisadas, também utilizei os commits `86c5816` (refatoração SRP) e `0aedaaf` (implementação do Iterator), realizados nos checkpoints anteriores.
+
+#### Decisão de projeto
+
+Decidi manter a arquitetura em camadas adotada pelo grupo, preservando a separação entre domínio, serviços e persistência.
+
+A refatoração de SRP e a implementação do Iterator demonstraram que foi possível modificar o comportamento de Veterinário sem alterar o SQLAlchemy ou os endpoints Flask.
+
+A alternativa de concentrar as regras e a persistência em uma mesma classe poderia reduzir a quantidade de componentes, mas aumentaria o acoplamento entre o domínio e o banco de dados.
+
+Considero que a separação atual oferece benefícios para a manutenção e os testes. Entretanto, o encapsulamento da coleção de disponibilidades ainda merece melhorias.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa (ChatGPT) como ferramenta de apoio durante a elaboração da documentação da entrega final.
+
+A ferramenta auxiliou na análise do mapeamento `relationship()` e `cascade` do SQLAlchemy, na revisão dos requisitos do trabalho e na organização da retrospectiva sobre SRP e Iterator.
+
+Também utilizei a IA para comparar as contribuições com as decisões arquiteturais anteriores e estruturar este autorrelato.
+
+A revisão do conteúdo, a conferência das informações com o repositório e a integração das alterações permanecem sob minha responsabilidade.
+
+#### Reflexão individual
+
+Ao longo da Fase 2, percebi que as decisões da Fase 1 tinham consequências que não apareciam quando eu analisava apenas o funcionamento das funcionalidades. No módulo Veterinário, a comparação de conflitos funcionava, mas estava dentro de `adicionar_disponibilidade()`, junto com a inclusão dos horários. A refatoração de SRP me ajudou a identificar essa mistura e a deixar a comparação em `Disponibilidade.conflita_com()`, sem mudar a regra de negócio.
+
+Com o Iterator, entendi melhor a diferença entre ter uma lista disponível e oferecer uma forma organizada de percorrê-la. A consulta por dia da semana ficou concentrada em `IteradorDisponibilidades`, embora isso tenha acrescentado outra classe e uma cópia superficial da coleção. Os testes foram importantes para mostrar que os conflitos continuaram sendo rejeitados e os horários consecutivos continuaram permitidos.
+
+Na análise final do SQLAlchemy, também ficou mais clara a vantagem de manter o mapeamento em `adapters/orm.py`: pude mudar regras e percurso no domínio sem alterar tabelas ou repositórios. Em compensação, a coleção pública de disponibilidades ainda permite alterações diretas, e o comportamento de exclusão em cascata merece testes específicos.
+
+Hoje eu manteria a arquitetura em camadas. Se recomeçasse o projeto, definiria antes como proteger a coleção de disponibilidades, acrescentaria testes para o `delete-orphan` e procuraria documentar as decisões no momento em que fossem tomadas, em vez de deixar parte dessa análise para os checkpoints.
