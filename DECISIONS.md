@@ -1857,3 +1857,51 @@ Usei o Claude para levantar no repositório os pontos de uso de cada framework e
 #### Reflexão
 
 A Fase 2 mudou a forma como eu olho para o código que eu mesmo escrevi na Fase 1. Ao documentar a arquitetura, percebi que decisões que pareciam naturais, como deixar a regra de status dentro do `Agendamento`, tinham custos que eu não tinha medido, e que algumas suposições não se sustentavam: os testes e2e que eu achava que cobriam erros só testavam os casos de sucesso. A refatoração de DIP me mostrou que uma violação de SOLID pode ser bem concreta: a mesma requisição era aceita ou recusada dependendo do fuso do servidor. Já o padrão State me ensinou que um padrão do livro precisa se adaptar ao resto do sistema, porque o ORM cria os objetos sem passar pelo construtor. O que eu mais aprendi foi a sustentar uma afirmação com evidência do repositório, como um hash, uma contagem ou um teste, em vez de apenas descrever a intenção. Faria diferente em dois pontos: começaria cada checkpoint mais cedo, porque vários dos meus commits ficaram a poucos dias do prazo, e corrigiria logo os riscos que eu mesmo apontei no checkpoint 1, como as versões sem fixar no `requirements.txt` e a comparação por texto de exceções, que chegaram abertos até a entrega final.
+
+### Cauã Raphael Santos de Paula
+
+#### O que fiz
+
+Nesta etapa da entrega final, contribuí para a elaboração da retrospectiva da arquitetura, com foco na análise do agregado Unidade / Local de Atendimento.
+
+Analisei a previsão inicial de que agregados próximos de CRUD, como Unidade, teriam menos benefícios com a arquitetura em camadas. A partir das alterações realizadas durante a Fase 2, essa previsão foi considerada não confirmada.
+
+A análise considerou duas mudanças principais. A primeira foi a aplicação do princípio da Responsabilidade Única (SRP), no commit `ecffe2f`, que extraiu a serialização da Unidade dos endpoints HTTP para o arquivo `entrypoints/serializers.py`.
+
+A segunda foi a aplicação do padrão Strategy, no commit `0e8991f`, que separou as políticas de atendimento presencial e domiciliar, mantendo as regras de validação no domínio.
+
+Também analisei os custos dessas decisões, considerando o aumento da quantidade de componentes e os benefícios obtidos com a separação de responsabilidades. Essa análise foi incorporada à seção de retrospectiva do projeto.
+
+#### Arquivos trabalhados
+
+- `docs/retrospectiva.md`
+- `DECISIONS.md` (esta subseção)
+
+#### Commits relacionados
+
+- `ecffe2f` — `refactor: aplica SRP na serializacao de Unidade`.
+- `0e8991f` — `feat: aplica Strategy ao agregado Unidade`.
+- `8f58e20` — `docs: aprofunda retrospectiva do agregado Unidade`.
+- Este commit contém a correção da retrospectiva e o autorrelato da entrega final.
+
+#### Decisão de projeto
+
+A análise reforçou a decisão de manter a arquitetura em camadas, em vez de adotar uma abordagem híbrida com Active Record para agregados considerados mais simples.
+
+No caso de Unidade, a quantidade reduzida de operações não significava ausência de responsabilidades ou regras de negócio que justificassem a separação. A extração do serializador demonstrou a importância de separar a apresentação dos dados, enquanto Strategy permitiu organizar diferentes políticas de atendimento sem concentrar seus comportamentos na entidade.
+
+Embora essas soluções tenham introduzido componentes adicionais, considerei os custos aceitáveis diante da melhoria na organização, na manutenção e na possibilidade de evolução do sistema.
+
+#### Uso de IA generativa
+
+Utilizei IA generativa (ChatGPT) como ferramenta de apoio para analisar as alterações do repositório, relacionar as implementações de SRP e Strategy com as decisões arquiteturais e organizar a escrita da retrospectiva e deste autorrelato.
+
+A revisão do conteúdo, a conferência das informações com as implementações realizadas e a decisão sobre o texto final permaneceram sob minha responsabilidade.
+
+#### Reflexão
+
+A elaboração da retrospectiva permitiu perceber que a simplicidade aparente de um agregado não determina necessariamente a quantidade de responsabilidades que ele possui. Unidade inicialmente parecia exigir apenas operações de cadastro e consulta, mas as mudanças realizadas demonstraram a importância de separar tanto a apresentação dos dados quanto as regras específicas de atendimento.
+
+Também ficou mais claro que a aplicação de princípios e padrões de projeto precisa estar relacionada a problemas concretos do código. O SRP e o Strategy acrescentaram componentes à implementação, mas resolveram questões diferentes e contribuíram para manter cada responsabilidade em seu local adequado.
+
+Como aprendizado, considero importante avaliar não apenas se uma implementação funciona, mas também como suas responsabilidades estão organizadas e quais seriam os impactos de futuras alterações. A retrospectiva ajudou a relacionar as decisões tomadas durante o desenvolvimento com os resultados observados na arquitetura final.

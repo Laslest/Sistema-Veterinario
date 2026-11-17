@@ -13,11 +13,11 @@
 | A entrada HTTP é acoplada à persistência (risco 3) | **Confirmada.** `flask_app.py` só mudou em refatorações de persistência ou serialização (`53715cc`, `ecffe2f`); a composição continua nele. |
 | Dependências sem versão (risco 1) e agendamento sem integridade de referências (risco 2) | **Ainda abertos.** `requirements.txt` segue sem versões e `agendamentos` sem `ForeignKey`. |
 | Exceção comparada por texto no cancelamento (seção 4.1) | **Ainda aberta** (`flask_app.py`, linha 119). |
-| Para agregados quase CRUD, como Unidade, o benefício das camadas é menor (4.2 e 5.1) | **Não confirmada.** Unidade recebeu um Strategy (`0e8991f`) no domínio. |
+| Para agregados quase CRUD, como Unidade, o benefício das camadas é menor (4.2 e 5.1) | **Não confirmada.** A Fase 2 demonstrou que Unidade também se beneficiou da separação de responsabilidades: a serialização foi extraída das rotas HTTP (`ecffe2f`) e as regras de atendimento foram separadas com Strategy (`0e8991f`). |
 
 O trade-off que mais pesou foi **separação × simplicidade**, a favor da separação: o custo apareceu na quantidade de classes (o State distribuiu a lógica de três métodos em cinco classes), não na dificuldade das mudanças.
 
-| Para agregados quase CRUD, como Unidade, o benefício das camadas é menor (4.2 e 5.1) | **Não confirmada.** A Fase 2 demonstrou que Unidade também se beneficiou da separação de responsabilidades: a serialização foi extraída das rotas HTTP (`ecffe2f`) e as regras de atendimento foram separadas com Strategy (`0e8991f`). |
+
 
 ## 2. As camadas ajudaram ou atrapalharam?
 
