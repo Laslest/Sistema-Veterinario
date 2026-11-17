@@ -17,6 +17,8 @@
 
 O trade-off que mais pesou foi **separação × simplicidade**, a favor da separação: o custo apareceu na quantidade de classes (o State distribuiu a lógica de três métodos em cinco classes), não na dificuldade das mudanças.
 
+| Para agregados quase CRUD, como Unidade, o benefício das camadas é menor (4.2 e 5.1) | **Não confirmada.** A Fase 2 demonstrou que Unidade também se beneficiou da separação de responsabilidades: a serialização foi extraída das rotas HTTP (`ecffe2f`) e as regras de atendimento foram separadas com Strategy (`0e8991f`). |
+
 ## 2. As camadas ajudaram ou atrapalharam?
 
 Ajudaram. Arquivos de produção alterados por commit da Fase 2 (sem os testes):
@@ -34,6 +36,24 @@ Ajudaram. Arquivos de produção alterados por commit da Fase 2 (sem os testes):
 
 Nenhuma mudança tocou mais de duas camadas, e os padrões GoF ficaram no domínio. Com Active Record, a mesma classe teria regra, colunas e consultas, e cada padrão exigiria testes com banco.
 
+### Análise do agregado Unidade
+
+O agregado Unidade é um exemplo importante para avaliar a previsão de que agregados com comportamento próximo de CRUD teriam menos benefícios com a arquitetura em camadas. Inicialmente, sua implementação parecia relativamente simples, pois suas principais operações envolviam cadastrar e consultar unidades de atendimento. Entretanto, as alterações realizadas na Fase 2 demonstraram que mesmo esse agregado possuía responsabilidades e regras que justificavam uma organização mais cuidadosa.
+
+A primeira alteração ocorreu na aplicação do princípio da Responsabilidade Única (SRP), no commit `ecffe2f`. Antes da refatoração, os endpoints de cadastro e busca de Unidade, em `flask_app.py`, construíam individualmente a representação JSON da entidade, incluindo os dados do endereço e o tratamento de unidades domiciliares sem endereço físico. Essa duplicação fazia com que a responsabilidade de apresentação dos dados ficasse misturada ao fluxo de comunicação HTTP.
+
+A solução foi extrair essa lógica para a função `serializar_unidade()`, localizada em `entrypoints/serializers.py`. Com isso, os endpoints passaram a reutilizar o mesmo componente para produzir suas respostas. A alteração não exigiu mudanças no domínio nem na persistência, demonstrando que a separação das responsabilidades permitiu modificar a apresentação da entidade sem ampliar o impacto da alteração para outras partes do sistema.
+
+A segunda alteração foi a aplicação do padrão Strategy, no commit `0e8991f`. Nesse caso, a questão estava relacionada às próprias regras de negócio de Unidade. A modalidade de atendimento determina comportamentos diferentes: uma unidade presencial precisa possuir um endereço, enquanto uma unidade que realiza atendimento domiciliar pode não possuir um endereço físico.
+
+Uma implementação baseada apenas em uma condição dentro da entidade seria suficiente para atender à regra atual. Entretanto, essa abordagem manteria os comportamentos das modalidades concentrados na própria classe `Unidade`. Com Strategy, foram introduzidas a abstração `PoliticaAtendimento` e as implementações `AtendimentoPresencial` e `AtendimentoDomiciliar`. A entidade passou a selecionar a política correspondente e delegar a validação do endereço, mantendo as regras no domínio e separando os comportamentos de cada modalidade.
+
+As duas alterações apresentam benefícios em pontos diferentes da arquitetura. O SRP organizou a responsabilidade de serialização na camada de entrada, enquanto Strategy organizou as variações de comportamento na camada de domínio. Portanto, não se tratou apenas de adicionar classes ou aplicar padrões por conveniência, mas de responder a problemas identificados na implementação existente.
+
+O custo dessas decisões também deve ser considerado. A extração do serializador introduziu um componente adicional, enquanto Strategy aumentou a quantidade de classes necessárias para representar uma regra que poderia ser escrita com uma condição simples. Esse custo foi considerado aceitável diante da redução da duplicação, da separação das responsabilidades e da possibilidade de estender as políticas de atendimento sem concentrar novas condições na entidade.
+
+Assim, o caso de Unidade contraria a expectativa de que agregados próximos de CRUD necessariamente se beneficiariam menos da arquitetura em camadas. A quantidade de operações não é suficiente para determinar a complexidade de um agregado: suas regras de negócio, responsabilidades e possibilidades de evolução também precisam ser consideradas.
+
 As camadas atrapalharam em dois pontos:
 
 - **Composição na entrada:** `flask_app.py` cria engine, sessão e repositórios, e `app = create_app()` na importação gera `sistema_veterinario.db` a cada execução dos e2e, o que levou ao `.db` commitado em `f8d4215` e removido em `b5fd88d`.
@@ -49,3 +69,4 @@ As camadas atrapalharam em dois pontos:
 4. Garantir as referências de Agendamento: `ForeignKey` em `agendamentos` e verificação em `criar_agendamento()`.
 
 Revemos a conclusão do checkpoint 1 de que agregados quase CRUD aceitariam uma solução mais simples: não adotaríamos um híbrido com Active Record. Unidade parecia simples, mas já tinha desde a Fase 1 a regra de endereço opcional e recebeu um Strategy; dois estilos no mesmo sistema obrigariam todos a conhecer os dois.
+
